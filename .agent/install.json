@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "agentic_stack_version": "0.18.0",
+  "abs_target": "/mnt/work/code/personal/pdf-indexing-pages-for-agents",
+  "installed_at": "2026-07-01T15:52:43Z",
+  "adapters": {
+    "claude-code": {
+      "installed_at": "2026-07-01T15:52:06Z",
+      "files_written": [
+        "CLAUDE.md",
+        ".claude/settings.json"
+      ],
+      "files_overwritten": [],
+      "files_alerted": [],
+      "file_results": [
+        {
+          "dst": "CLAUDE.md",
+          "result": "written_new"
+        },
+        {
+          "dst": ".claude/settings.json",
+          "result": "written_new"
+        }
+      ],
+      "post_install_results": [],
+      "brain_root_primitive": "$CLAUDE_PROJECT_DIR"
+    },
+    "cursor": {
+      "installed_at": "2026-07-01T15:52:42Z",
+      "files_written": [
+        ".cursor/rules/agentic-stack.mdc"
+      ],
+      "files_overwritten": [],
+      "files_alerted": [],
+      "file_results": [
+        {
+          "dst": ".cursor/rules/agentic-stack.mdc",
+          "result": "written_new"
+        }
+      ],
+      "post_install_results": []
+    },
+    "codex": {
+      "installed_at": "2026-07-01T15:52:43Z",
+      "files_written": [
+        "AGENTS.md"
+      ],
+      "files_overwritten": [],
+      "files_alerted": [],
+      "file_results": [
+        {
+          "dst": "AGENTS.md",
+          "result": "written_new"
+        }
+      ],
+      "post_install_results": [],
+      "skills_link": {
+        "target": ".agent/skills",
+        "dst": ".agents/skills",
+        "fallback": "rsync_with_delete"
+      },
+      "skills_link_pre_existed": false
+    }
+  }
+}
