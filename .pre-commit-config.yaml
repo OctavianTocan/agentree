@@ -4,15 +4,20 @@ repos:
     hooks:
       - id: ruff-format
         args: [PDFindex, main.py, tests]
+        files: ^(PDFindex/|main\.py$|tests/)
       - id: ruff
         args: [PDFindex, main.py, tests]
+        files: ^(PDFindex/|main\.py$|tests/)
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        files: ^(PDFindex/|main\.py$|tests/)
       - id: end-of-file-fixer
+        files: ^(PDFindex/|main\.py$|tests/)
       - id: check-added-large-files
+        files: ^(PDFindex/|main\.py$|tests/)
 
   - repo: local
     hooks:
@@ -21,3 +26,4 @@ repos:
         entry: uv run ty check PDFindex main.py tests
         language: system
         pass_filenames: false
+        files: ^(PDFindex/|main\.py$|tests/)
