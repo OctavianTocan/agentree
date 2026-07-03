@@ -5,7 +5,7 @@ import logging
 from pypdf import PdfReader
 from PDFindex.models import Page
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 MAX_TOKENS_PER_CHUNK = 20000
@@ -118,22 +118,33 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[s
     logger.debug(f"chunk_target: {chunk_target}")
 
     # Initialize the list of chunks and the current chunk's pages.
-    chunks = []
-    current_chunk_pages = []
-    current_token_count = 0
+    chunks: list[str] = []
+    current_chunk_pages: list[str] = []
+    current_token_count: int = 0
 
     # Iterate through the pages and add them to the current chunk's pages.
     for i, page in enumerate(pages):
-        page_tokens = page.tokens
+        current_page_tokens: int = page.tokens
+        current_page_contents: str = page.content
 
         # If the current token count plus the page tokens is greater than the target, add the current chunk's pages to the list of chunks and start a new chunk's pages.
-        # Add the current group to the list of groups.
-        # Start overlap from the previous chunk's pages.
+        if current_token_count + current_page_tokens > chunk_target:
+            chunks.append("".join(current_chunk_pages))
+            # TODO: Why are we doing this? What's the point of 'overlap_page', and why are we then setting the current chunk's pages to the pages from the overlap start to the current page? I don't understand the logic here.
+            overlap_start = max(i - overlap_page, 0)
+            # TODO: So, this is like marking an overlap from where we are, back to some 'overlap_page' page?
+            current_chunk_pages = [page.content for page in pages[overlap_start:i]]
+            # TODO: This also just adds the tokens from the overlap to our current token count?
+            current_token_count = sum([page.tokens for page in pages[overlap_start:i]])
+
         # Add the current page to the current chunk's pages.
+        current_chunk_pages.append(current_page_contents)
         # Add the current page tokens to the current token count.
+        current_token_count += current_page_tokens
 
     # Add the last group to the list of groups.
     if current_chunk_pages:
         chunks.append("".join(current_chunk_pages))
 
+    logger.debug(f"len(chunks): {len(chunks)}")
     return chunks

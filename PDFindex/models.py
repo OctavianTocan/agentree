@@ -44,41 +44,5 @@ class Tree(BaseModel):
 class Page(BaseModel):
     """One page of a document."""
 
-    content: str = Field(description="Raw page text for this section, if retained.")
+    content: str = Field(description="Raw extracted text of this page.")
     tokens: int = Field(ge=0, description="Number of tokens in the page content.")
-
-
-def _demo() -> None:
-    tree = Tree(
-        doc_name="2023-annual-report-truncated.pdf",
-        structure=[
-            Node(title="Preface", start_index=1, end_index=4, node_id="0000"),
-            Node(
-                title="Monetary Policy and Economic Developments",
-                start_index=9,
-                end_index=9,
-                node_id="0003",
-                nodes=[
-                    Node(
-                        title="March 2024 Summary",
-                        start_index=9,
-                        end_index=14,
-                        node_id="0004",
-                    ),
-                    Node(
-                        title="June 2023 Summary",
-                        start_index=15,
-                        end_index=20,
-                        node_id="0005",
-                    ),
-                ],
-            ),
-        ],
-    )
-    round_tripped = Tree.model_validate_json(tree.model_dump_json())
-    assert round_tripped == tree
-    print(tree.model_dump_json(indent=2, exclude_none=True))
-
-
-if __name__ == "__main__":
-    _demo()
