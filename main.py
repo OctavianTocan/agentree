@@ -1,7 +1,9 @@
-from PDFindex.pdf_index import index
-import os
-import argparse
 import logging
+import os
+
+import typer
+
+from PDFindex.pdf_index import index
 
 logging.basicConfig(
     level=logging.INFO,
@@ -10,25 +12,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-if __name__ == "__main__":
-      # Set up argument parser
-    parser = argparse.ArgumentParser(description='Process PDF or Markdown document and generate structure')
-    parser.add_argument('--pdf_path', type=str, help='Path to the PDF file')
-    # Parse arguments
-    args = parser.parse_args()
+app = typer.Typer()
 
-    if not args.pdf_path:
-      logger.error("No PDF file provided")
-      raise ValueError("PDF file must be provided")
-    else:
-      # Process PDF file
-      if not args.pdf_path.lower().endswith('.pdf'):
-        logger.error("Invalid file extension: %s", args.pdf_path)
+
+@app.command()
+def main(
+    pdf_path: str = typer.Option(..., "--pdf_path", help="Path to the PDF file"),
+) -> None:
+    """Process a PDF document and generate its structure."""
+    if not pdf_path.lower().endswith(".pdf"):
+        logger.error("Invalid file extension: %s", pdf_path)
         raise ValueError("PDF file must have .pdf extension")
-      if not os.path.isfile(args.pdf_path):
-        logger.error("PDF file not found: %s", args.pdf_path)
-        raise ValueError(f"PDF file not found: {args.pdf_path}")
-      else:
-        logger.info("Processing PDF: %s", args.pdf_path)
-        # Index the PDF file.
-        index(args.pdf_path)
+    if not os.path.isfile(pdf_path):
+        logger.error("PDF file not found: %s", pdf_path)
+        raise ValueError(f"PDF file not found: {pdf_path}")
+
+    logger.info("Processing PDF: %s", pdf_path)
+    index(pdf_path)
+
+
+if __name__ == "__main__":
+    app()
