@@ -1,19 +1,16 @@
 import asyncio
-import os
 
 import pytest
-from dotenv import load_dotenv
 
 from PDFindex.models import TreeStructure
+from PDFindex.settings import settings
 from PDFindex.toc_extraction import (
     generate_toc_continuation_structure,
     generate_toc_initial_structure,
 )
 
-load_dotenv()
-
 requires_live_claude = pytest.mark.skipif(
-    not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"),
+    not settings.claude_code_oauth_token,
     reason="requires a live Claude Agent SDK OAuth token",
 )
 

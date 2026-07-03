@@ -1,21 +1,20 @@
 import asyncio
-import os
-from dotenv import load_dotenv
-from PDFindex.toc_extraction import generate_toc_continuation_structure
-from PDFindex.toc_extraction import generate_toc_initial_structure
-import math
 import logging
+import math
 
 from pypdf import PdfReader
-from PDFindex.models import Page, TreeStructure
 
-# Load the environment variables from the .env file. (It'll populate the OAuth token, which the Agent SDK needs to work.)
-load_dotenv()
+from PDFindex.models import Page, TreeStructure
+from PDFindex.settings import settings
+from PDFindex.toc_extraction import (
+    generate_toc_continuation_structure,
+    generate_toc_initial_structure,
+)
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-MAX_TOKENS_PER_CHUNK = int(os.environ.get("PDFINDEX_MAX_TOKENS_PER_CHUNK", "20000"))
+MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
 
 
 def index(pdf_path: str) -> list[TreeStructure]:

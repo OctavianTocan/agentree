@@ -1,8 +1,6 @@
 import dataclasses
-import os
 
 import pytest
-from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from PDFindex.claude_client import (
@@ -10,11 +8,10 @@ from PDFindex.claude_client import (
     generate_structured_completion,
     strip_json_fence,
 )
-
-load_dotenv()
+from PDFindex.settings import settings
 
 requires_live_claude = pytest.mark.skipif(
-    not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"),
+    not settings.claude_code_oauth_token,
     reason="requires a live Claude Agent SDK OAuth token",
 )
 

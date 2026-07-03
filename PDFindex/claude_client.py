@@ -2,10 +2,8 @@
 
 import dataclasses
 import logging
-import os
-from typing import Any, Literal, TypedDict, TypeVar, get_args
+from typing import Any, Literal, TypedDict, TypeVar
 
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from claude_agent_sdk import (
     query,
@@ -15,24 +13,12 @@ from claude_agent_sdk import (
     ToolUseBlock,
 )
 
-load_dotenv()
+from PDFindex.settings import settings
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
-
-ClaudeModelAlias = Literal["haiku", "sonnet", "opus", "fable"]
-"""Model aliases accepted by the Claude Agent SDK's `model` option."""
-
-
-def _model_from_env() -> ClaudeModelAlias:
-    """Read PDFINDEX_MODEL from the environment, validated against ClaudeModelAlias."""
-    model = os.environ.get("PDFINDEX_MODEL", "haiku")
-    valid_models = get_args(ClaudeModelAlias)
-    if model not in valid_models:
-        raise ValueError(f"PDFINDEX_MODEL must be one of {valid_models}, got {model!r}")
-    return model  # type: ignore[return-value]  # validated above
 
 
 class JsonSchemaOutputFormat(TypedDict):
@@ -66,10 +52,8 @@ DISALLOWED_TOOLS: list[str] = [
     "Skill",
 ]
 
-DEFAULT_MODEL: ClaudeModelAlias = _model_from_env()
-
 DEFAULT_OPTIONS = ClaudeAgentOptions(
-    model=DEFAULT_MODEL,
+    model=settings.model,
     max_turns=1,
     thinking={"type": "disabled"},
     setting_sources=[],
