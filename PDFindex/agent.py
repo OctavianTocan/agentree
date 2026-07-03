@@ -1,3 +1,0 @@
-def query(prompt: str) -> str:
-    """This function is used to query the agent."""
-    ...

@@ -1,4 +1,4 @@
-from PDFindex.models import Node, Tree
+from PDFindex.models import Node, Tree, TreeStructure, TreeStructureList
 
 
 def test_tree_round_trips_through_json():
@@ -27,3 +27,22 @@ def test_leaf_node_defaults_to_no_children():
     node = Node(title="Conclusion", start_index=10, end_index=11)
 
     assert node.nodes == []
+
+
+def test_tree_structure_physical_index_defaults_to_none():
+    section = TreeStructure(structure="1", title="Overview")
+
+    assert section.physical_index is None
+
+
+def test_tree_structure_list_round_trips_through_json():
+    sections = TreeStructureList(
+        sections=[
+            TreeStructure(structure="1", title="Overview", physical_index="<physical_index_7>"),
+            TreeStructure(structure="2", title="Methods", physical_index=None),
+        ]
+    )
+
+    round_tripped = TreeStructureList.model_validate_json(sections.model_dump_json())
+
+    assert round_tripped == sections

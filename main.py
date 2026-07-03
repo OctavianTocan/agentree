@@ -3,7 +3,11 @@ import os
 import argparse
 import logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("pdf_index.log")],
+)
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

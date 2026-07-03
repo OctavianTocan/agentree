@@ -46,3 +46,24 @@ class Page(BaseModel):
 
     content: str = Field(description="Raw extracted text of this page.")
     tokens: int = Field(ge=0, description="Number of tokens in the page content.")
+
+
+class TreeStructure(BaseModel):
+    """One section of a document's table of contents, as extracted by the model."""
+
+    structure: str = Field(
+        description="The structure index of the hierarchy section in the table of contents."
+    )
+    title: str = Field(description="The title of the section.")
+    physical_index: str | None = Field(
+        default=None,
+        description="The physical index of the start of the section, or null if it doesn't start in the given text.",
+    )
+
+
+class TreeStructureList(BaseModel):
+    """Flat list of sections extracted from one chunk of the document."""
+
+    sections: list[TreeStructure] = Field(
+        description="One entry per section found in the given text."
+    )

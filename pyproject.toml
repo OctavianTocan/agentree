@@ -7,14 +7,28 @@ requires-python = ">=3.10"
 dependencies = [
     "claude-agent-sdk>=0.2.110",
     "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.2",
     "pypdf>=6.14.2",
     "python-dotenv>=1.2.2",
+    "typer>=0.26.8",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.15.20",
+    "ty>=0.0.56",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"PDFindex/prompts.py" = ["E501"]

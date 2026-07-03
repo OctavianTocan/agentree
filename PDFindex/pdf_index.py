@@ -1,18 +1,32 @@
-import math
 import asyncio
+import os
+from dotenv import load_dotenv
+from PDFindex.toc_extraction import generate_toc_continuation_structure
+from PDFindex.toc_extraction import generate_toc_initial_structure
+import math
 import logging
 
 from pypdf import PdfReader
-from PDFindex.models import Page
+from PDFindex.models import Page, TreeStructure
+
+# Load the environment variables from the .env file. (It'll populate the OAuth token, which the Agent SDK needs to work.)
+load_dotenv()
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-MAX_TOKENS_PER_CHUNK = 20000
+MAX_TOKENS_PER_CHUNK = int(os.environ.get("PDFINDEX_MAX_TOKENS_PER_CHUNK", "20000"))
 
 
-def index(pdf_path: str):
-    """This function is used to index a PDF file."""
+def index(pdf_path: str) -> list[TreeStructure]:
+    """Index a PDF file with no table of contents into a flat list of sections.
+
+    Args:
+        pdf_path: Path to the PDF file to index.
+
+    Returns:
+        Sections found across the whole document, in document order.
+    """
 
     # Extract the text and tokens from the PDF file.
     page_list = extract_text_and_tokens(pdf_path)
@@ -20,25 +34,29 @@ def index(pdf_path: str):
     logger.info({"total_page_number": len(page_list)})
     logger.info({"total_token": sum([page[1] for page in page_list])})
 
-    process(page_list)
+    chunk_texts: list[str] = process(page_list)
+    structure = asyncio.run(generate_toc_initial_structure(chunk_texts[0]))
+    logger.info(f"initial_structure: {structure}")
 
-    #     structure = tree_parser(...)              # the tree you already understand
-    # write_node_id(structure)                  # give every node an id: "0000", "0001", ...
-    # add_node_text(structure, page_list)       # slice in each node's actual page text
-    # generate_summaries_for_structure(structure) # one LLM call per node, summarizing its text
-    # generate_doc_description(structure)       # one more LLM call, over the whole tree, for a doc-level blurb
-    # format_structure(structure)               # reorder each node's keys for tidy output
-    # return {doc_name, doc_description, structure}
+    for chunk_text in chunk_texts[1:]:
+        continuation_structure = asyncio.run(
+            generate_toc_continuation_structure(chunk_text, structure)
+        )
+        logger.info(f"continuation_structure: {continuation_structure}")
+        structure.extend(continuation_structure)
 
-    # async def page_index_builder():
-    #     # TODO: Still needs implementing.
-    #     structure = await build_document_node_tree(page_list)
-
-    # return asyncio.run(page_index_builder())
+    return structure
 
 
-def extract_text_and_tokens(pdf_path: str):
-    """This function is used to extract the text and tokens from the PDF file."""
+def extract_text_and_tokens(pdf_path: str) -> list[tuple[str, int]]:
+    """Read every page of a PDF and estimate its token count.
+
+    Args:
+        pdf_path: Path to the PDF file to read.
+
+    Returns:
+        One (page_text, token_count) tuple per page, in page order.
+    """
     logger.info("Reading PDF: %s", pdf_path)
     page_list = []
     reader = PdfReader(pdf_path)
@@ -56,18 +74,27 @@ def extract_text_and_tokens(pdf_path: str):
     return page_list
 
 
-def count_tokens(text):
-    """This function is used to count the tokens in the text."""
+def count_tokens(text: str) -> int:
+    """Estimate a text's token count (roughly 4 characters per token)."""
     return len(text) // 4
 
 
 async def build_document_node_tree(page_list):
-    # This builds the tree structure of the document.
+    """Placeholder for building the final Node/Tree structure. Not yet implemented."""
     ...
 
 
-def process(page_list, start_index=1):
-    """This function is used to process the document without a table of contents."""
+def process(page_list: list[tuple[str, int]], start_index: int = 1) -> list[str]:
+    """Tag each page with its physical index and split the document into overlapping chunks.
+
+    Args:
+        page_list: One (page_text, token_count) tuple per page, as returned by
+            `extract_text_and_tokens`.
+        start_index: Physical index (1-indexed) of the first page in `page_list`.
+
+    Returns:
+        Page-tagged chunk texts, each under the token budget.
+    """
     pages: list[Page] = []
     for page_index in range(start_index, start_index + len(page_list)):
         # Add the physical index to the page text. This is used to identify the page in the document.
@@ -80,13 +107,24 @@ def process(page_list, start_index=1):
         pages.append(Page(content=page_text, tokens=token_count))
 
     # Chunk the pages into chunks with overlap between them.
-    chunk_texts = chunk_pages_with_overlap(pages)
+    chunk_texts: list[str] = chunk_pages_with_overlap(pages)
     logger.info(f"len(chunk_texts): {len(chunk_texts)}")
+    return chunk_texts
 
 
 # TODO: Would love to use Pydantic here. That would be pretty cool.
 def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[str]:
-    """This function is used to chunk the pages into chunks with a small page overlap between chunks."""
+    """Group pages into token-budgeted chunks, with a small page overlap between consecutive chunks.
+
+    Args:
+        pages: Page-tagged content to group, in document order.
+        overlap_page: Number of trailing pages from one chunk to repeat at
+            the start of the next, so a section header split across a chunk
+            boundary isn't missed.
+
+    Returns:
+        Concatenated chunk texts, each under `MAX_TOKENS_PER_CHUNK`.
+    """
 
     # Calculate the total token count of the pages.
     total_token_count = sum([page.tokens for page in pages])
@@ -127,14 +165,13 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[s
         current_page_tokens: int = page.tokens
         current_page_contents: str = page.content
 
-        # If the current token count plus the page tokens is greater than the target, add the current chunk's pages to the list of chunks and start a new chunk's pages.
         if current_token_count + current_page_tokens > chunk_target:
+            # Close out the current chunk now that this page would push it over budget.
             chunks.append("".join(current_chunk_pages))
-            # TODO: Why are we doing this? What's the point of 'overlap_page', and why are we then setting the current chunk's pages to the pages from the overlap start to the current page? I don't understand the logic here.
+            # Re-seed the next chunk with the last `overlap_page` pages of this one, so a
+            # section header split across the chunk boundary still appears in both chunks.
             overlap_start = max(i - overlap_page, 0)
-            # TODO: So, this is like marking an overlap from where we are, back to some 'overlap_page' page?
             current_chunk_pages = [page.content for page in pages[overlap_start:i]]
-            # TODO: This also just adds the tokens from the overlap to our current token count?
             current_token_count = sum([page.tokens for page in pages[overlap_start:i]])
 
         # Add the current page to the current chunk's pages.

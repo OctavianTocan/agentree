@@ -2,3 +2,5 @@ example/
 .venv/
 .python-version
 __pycache__/
+.env
+pdf_index.log
