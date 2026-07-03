@@ -25,6 +25,7 @@ dream cycle produced zero candidates. This version:
 Drop-in for the old command in settings.json:
     "command": "python3 .agent/harness/hooks/claude_code_post_tool.py"
 """
+
 import json, os, re, sys
 
 # Resolve .agent/ root from this file's location:
@@ -38,8 +39,8 @@ AGENT_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, os.path.join(AGENT_ROOT, "harness"))
 sys.path.insert(0, os.path.join(AGENT_ROOT, "tools"))
 
-from hooks.post_execution import log_execution   # noqa: E402
-from hooks.on_failure import on_failure          # noqa: E402
+from hooks.post_execution import log_execution  # noqa: E402
+from hooks.on_failure import on_failure  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -56,21 +57,21 @@ from hooks.on_failure import on_failure          # noqa: E402
 # belongs here. Service names (supabase, stripe, vercel…) do NOT belong
 # here — put those in .agent/protocols/hook_patterns.json.
 _UNIVERSAL_HIGH = [
-    r'deploy|deployment|release|rollback',
-    r'migration|migrate',
-    r'schema|alter\s+table|drop\s+table|create\s+table|truncate',
-    r'production|prod\b|staging\b',
-    r'force.?push|push\s+--force',
-    r'secret|credential',
+    r"deploy|deployment|release|rollback",
+    r"migration|migrate",
+    r"schema|alter\s+table|drop\s+table|create\s+table|truncate",
+    r"production|prod\b|staging\b",
+    r"force.?push|push\s+--force",
+    r"secret|credential",
 ]
 
 # Patterns that matter but are recoverable on any stack.
 _UNIVERSAL_MEDIUM = [
-    r'commit|push|merge|rebase',
-    r'test|spec|build|bundle|compile',
-    r'install|upgrade|uninstall',
-    r'delete|remove|unlink',
-    r'chmod|chown|cron|systemctl',
+    r"commit|push|merge|rebase",
+    r"test|spec|build|bundle|compile",
+    r"install|upgrade|uninstall",
+    r"delete|remove|unlink",
+    r"chmod|chown|cron|systemctl",
 ]
 
 
@@ -93,7 +94,7 @@ def _load_user_patterns() -> tuple[list[str], list[str]]:
             cfg = json.load(f)
     except (OSError, json.JSONDecodeError):
         return [], []
-    raw_high   = [str(p) for p in cfg.get("high_stakes",   []) if p]
+    raw_high = [str(p) for p in cfg.get("high_stakes", []) if p]
     raw_medium = [str(p) for p in cfg.get("medium_stakes", []) if p]
     # Drop fragments that aren't valid standalone regex — a single typo
     # (e.g. unbalanced paren) would otherwise kill every PostToolUse
@@ -108,6 +109,7 @@ def _filter_valid(fragments: list[str]) -> list[str]:
             re.compile(frag)
         except re.error as e:
             import sys
+
             print(
                 f"hook_patterns.json: skipping invalid regex {frag!r}: {e}",
                 file=sys.stderr,
@@ -122,15 +124,14 @@ def _build_pattern(fragments: list[str]) -> re.Pattern | None:
     Returns None on failure; caller decides on fallback behavior."""
     if not fragments:
         return None
-    combined = r'\b(' + '|'.join(fragments) + r')\b'
+    combined = r"\b(" + "|".join(fragments) + r")\b"
     try:
         return re.compile(combined, re.IGNORECASE)
     except re.error:
         return None
 
 
-def _build_with_fallback(universals: list[str],
-                         user: list[str]) -> re.Pattern | None:
+def _build_with_fallback(universals: list[str], user: list[str]) -> re.Pattern | None:
     """Try merging universal + user fragments. If the merged pattern fails
     to compile (one fragment like `(?i)foo` that is valid standalone, OR
     two fragments that only conflict together like duplicate named groups),
@@ -142,6 +143,7 @@ def _build_with_fallback(universals: list[str],
     if merged is not None or not user:
         return merged
     import sys
+
     surviving: list[str] = []
     for frag in user:
         if _build_pattern(universals + surviving + [frag]) is not None:
@@ -158,7 +160,7 @@ def _build_with_fallback(universals: list[str],
 # Build once at import time.  User patterns are merged in here so there's
 # no per-call file I/O.
 _user_high, _user_medium = _load_user_patterns()
-_HIGH   = _build_with_fallback(_UNIVERSAL_HIGH,   _user_high)
+_HIGH = _build_with_fallback(_UNIVERSAL_HIGH, _user_high)
 _MEDIUM = _build_with_fallback(_UNIVERSAL_MEDIUM, _user_medium)
 
 
@@ -199,10 +201,10 @@ def _pain_score(importance: int, success: bool) -> int:
 # ---------------------------------------------------------------------------
 
 _ERROR_SIGNALS = re.compile(
-    r'\b(error|exception|traceback|failed|failure|'
-    r'denied|forbidden|unauthorized|'
-    r'ENOENT|EACCES|EPERM|ECONNREFUSED|'
-    r'cannot|could not|unable to|not found)\b',
+    r"\b(error|exception|traceback|failed|failure|"
+    r"denied|forbidden|unauthorized|"
+    r"ENOENT|EACCES|EPERM|ECONNREFUSED|"
+    r"cannot|could not|unable to|not found)\b",
     re.IGNORECASE,
 )
 
@@ -214,15 +216,15 @@ _ERROR_SIGNALS = re.compile(
 # `grep Error logfile; rc=$?; set -e`-style patterns where exit_code=0 IS
 # still trustworthy for the actual command.
 _EXIT_MASKED = re.compile(
-    r'\|\|\s*(?:true|:|exit\s+0)'    # || true   ||  :   || exit 0
-    r'|;\s*(?:true|:)\s*$',          # ; true    ; :  at end of command
+    r"\|\|\s*(?:true|:|exit\s+0)"  # || true   ||  :   || exit 0
+    r"|;\s*(?:true|:)\s*$",  # ; true    ; :  at end of command
     re.IGNORECASE,
 )
 
 
 _QUOTED_STRING = re.compile(
-    r"'[^']*'"                      # single-quoted (no escapes in bash)
-    r'|"(?:[^"\\]|\\.)*"',          # double-quoted, honoring backslash escapes
+    r"'[^']*'"  # single-quoted (no escapes in bash)
+    r'|"(?:[^"\\]|\\.)*"',  # double-quoted, honoring backslash escapes
 )
 
 
@@ -333,6 +335,7 @@ def _is_success_impl(tool_name: str, tool_input: dict, resp: dict) -> bool:
 # Output extraction (handles multiple Claude Code response shapes)
 # ---------------------------------------------------------------------------
 
+
 def _extract_output(resp: dict) -> str:
     """Pull plain text from whatever shape tool_response comes in."""
     if not isinstance(resp, dict):
@@ -347,8 +350,7 @@ def _extract_output(resp: dict) -> str:
     content = resp.get("content")
     if isinstance(content, list):
         texts = [
-            c.get("text", "") for c in content
-            if isinstance(c, dict) and c.get("type") == "text"
+            c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"
         ]
         return " ".join(texts)[:500]
 
@@ -373,6 +375,7 @@ def _extract_error(resp: dict) -> str:
 # Action label (short, searchable)
 # ---------------------------------------------------------------------------
 
+
 def _action_label(tool_name: str, tool_input: dict) -> str:
     """First-word summary. Ends up in the `action` field of the episodic entry."""
     if tool_name == "Bash":
@@ -382,10 +385,12 @@ def _action_label(tool_name: str, tool_input: dict) -> str:
         return f"bash: {first}"
 
     if tool_name in ("Edit", "MultiEdit"):
-        path = (tool_input.get("file_path")
-                or tool_input.get("path")
-                or tool_input.get("new_path")
-                or "?")
+        path = (
+            tool_input.get("file_path")
+            or tool_input.get("path")
+            or tool_input.get("new_path")
+            or "?"
+        )
         return f"edit: {path}"
 
     if tool_name == "Write":
@@ -398,8 +403,7 @@ def _action_label(tool_name: str, tool_input: dict) -> str:
 
     if tool_name == "TodoWrite":
         todos = tool_input.get("todos", [])
-        pending = [t for t in todos if isinstance(t, dict)
-                   and t.get("status") == "in_progress"]
+        pending = [t for t in todos if isinstance(t, dict) and t.get("status") == "in_progress"]
         if pending:
             desc = pending[0].get("content", "")[:60]
             return f"todo-update: {desc}"
@@ -420,8 +424,8 @@ def _action_label(tool_name: str, tool_input: dict) -> str:
 # Reflection generation (this is what the dream cycle clusters on)
 # ---------------------------------------------------------------------------
 
-def _reflection(tool_name: str, tool_input: dict,
-                tool_response: dict, success: bool) -> str:
+
+def _reflection(tool_name: str, tool_input: dict, tool_response: dict, success: bool) -> str:
     """
     Produce a non-empty, content-rich reflection string. This is the most
     important field for the dream cycle — content_cluster() calls word_set()
@@ -466,10 +470,7 @@ def _reflection(tool_name: str, tool_input: dict,
         old = (tool_input.get("old_string") or "")[:50]
         new = (tool_input.get("new_string") or "")[:50]
         if old and new:
-            parts.append(
-                f"Edited {path}: replaced {repr(old[:30])} "
-                f"with {repr(new[:30])}"
-            )
+            parts.append(f"Edited {path}: replaced {repr(old[:30])} with {repr(new[:30])}")
         else:
             parts.append(f"Edited {path}")
         if not success:
@@ -487,18 +488,12 @@ def _reflection(tool_name: str, tool_input: dict,
     # --- TodoWrite ---
     elif tool_name == "TodoWrite":
         todos = tool_input.get("todos", [])
-        done = [t for t in todos if isinstance(t, dict)
-                and t.get("status") == "completed"]
-        in_prog = [t for t in todos if isinstance(t, dict)
-                   and t.get("status") == "in_progress"]
+        done = [t for t in todos if isinstance(t, dict) and t.get("status") == "completed"]
+        in_prog = [t for t in todos if isinstance(t, dict) and t.get("status") == "in_progress"]
         if done:
-            parts.append(
-                f"Completed todo: {done[-1].get('content','')[:60]}"
-            )
+            parts.append(f"Completed todo: {done[-1].get('content', '')[:60]}")
         if in_prog:
-            parts.append(
-                f"Now working on: {in_prog[0].get('content','')[:60]}"
-            )
+            parts.append(f"Now working on: {in_prog[0].get('content', '')[:60]}")
         if not parts:
             parts.append(f"Updated todo list ({len(todos)} items)")
 
@@ -516,8 +511,8 @@ def _reflection(tool_name: str, tool_input: dict,
 # Detail field — what went in / what came out
 # ---------------------------------------------------------------------------
 
-def _detail(tool_name: str, tool_input: dict,
-            tool_response: dict, success: bool) -> str:
+
+def _detail(tool_name: str, tool_input: dict, tool_response: dict, success: bool) -> str:
     """
     Stored in `detail`. More verbose than reflection. Truncated to 500 chars
     by log_execution anyway.
@@ -540,6 +535,7 @@ def _detail(tool_name: str, tool_input: dict,
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     # --- read payload from stdin ---
     try:
@@ -549,11 +545,7 @@ def main() -> None:
         payload = {}
 
     # Fallback to env vars (older Claude Code versions, or empty stdin)
-    tool_name = (
-        payload.get("tool_name")
-        or os.environ.get("CLAUDE_TOOL_NAME")
-        or "Unknown"
-    )
+    tool_name = payload.get("tool_name") or os.environ.get("CLAUDE_TOOL_NAME") or "Unknown"
 
     tool_input = payload.get("tool_input") or {}
     if isinstance(tool_input, str):

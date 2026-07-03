@@ -15,6 +15,7 @@ Panels:
 
 Use --json for programmatic consumption, --plain to disable ANSI.
 """
+
 import argparse, datetime, json, os, shutil, sys
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -29,6 +30,7 @@ VERSION_FILE = os.path.join(BASE, "..", "VERSION")
 
 
 # ── ANSI color primitives ──────────────────────────────────────────────────
+
 
 class C:
     RESET = "\033[0m"
@@ -80,6 +82,7 @@ def _visible_len(s):
 
 
 # ── Data collection ────────────────────────────────────────────────────────
+
 
 def _human_size(n):
     for unit in ("B", "KB", "MB", "GB"):
@@ -203,6 +206,7 @@ def candidate_stats():
         if not os.path.isdir(d):
             return 0
         return sum(1 for f in os.listdir(d) if f.endswith(".json"))
+
     return {
         "staged": _count(CANDIDATES),
         "graduated": _count(os.path.join(CANDIDATES, "graduated")),
@@ -211,8 +215,7 @@ def candidate_stats():
 
 
 def lesson_stats():
-    out = {"count": 0, "provisional": 0, "accepted": [],
-           "from_md_fallback": False}
+    out = {"count": 0, "provisional": 0, "accepted": [], "from_md_fallback": False}
     if os.path.exists(LESSONS_JSONL):
         for line in open(LESSONS_JSONL):
             line = line.strip()
@@ -256,7 +259,8 @@ def last_dream_cycle():
         return None
     # UTC so _human_age (which now compares against UTC) reads it correctly.
     return datetime.datetime.fromtimestamp(
-        os.path.getmtime(DREAM_LOG), tz=datetime.timezone.utc).isoformat()
+        os.path.getmtime(DREAM_LOG), tz=datetime.timezone.utc
+    ).isoformat()
 
 
 def failing_skills(threshold=3, window_days=14):
@@ -277,8 +281,7 @@ def failing_skills(threshold=3, window_days=14):
             continue
         s = e.get("skill", "?")
         by_skill[s] = by_skill.get(s, 0) + 1
-    return sorted([(s, n) for s, n in by_skill.items() if n >= threshold],
-                  key=lambda x: -x[1])
+    return sorted([(s, n) for s, n in by_skill.items() if n >= threshold], key=lambda x: -x[1])
 
 
 def _version():
@@ -291,6 +294,7 @@ def _version():
 
 
 # ── Rendering ──────────────────────────────────────────────────────────────
+
 
 def _boxed(title, lines, width, accent=C.CYAN):
     """Wrap content in a rounded box with a titled top edge."""
@@ -308,8 +312,7 @@ def _boxed(title, lines, width, accent=C.CYAN):
     return "\n".join([top] + body + [bottom])
 
 
-def _metric_row(label, value, width, icon=None, icon_color=C.GREEN,
-                value_color=C.BOLD, suffix=""):
+def _metric_row(label, value, width, icon=None, icon_color=C.GREEN, value_color=C.BOLD, suffix=""):
     icon_str = paint(icon, icon_color) + " " if icon else "  "
     label_str = paint(label.ljust(14), C.DIM)
     value_str = paint(f"{value}".rjust(6), value_color)
@@ -365,20 +368,36 @@ def render(width=None, json_out=False, plain=False):
     ep = data["episodic"]
     mem_lines = [""]
     icon, icol = _health_icon(ep["count"], zero_is_good=False, low_is_good=False)
-    mem_lines.append(_metric_row("episodes", ep["count"], width,
-                                 icon=icon, icon_color=icol,
-                                 suffix=f"({_human_size(ep['size'])})"))
+    mem_lines.append(
+        _metric_row(
+            "episodes",
+            ep["count"],
+            width,
+            icon=icon,
+            icon_color=icol,
+            suffix=f"({_human_size(ep['size'])})",
+        )
+    )
     fi, fc = _health_icon(ep["failures_14d"])
-    mem_lines.append(_metric_row("failures 14d", ep["failures_14d"], width,
-                                 icon=fi, icon_color=fc,
-                                 value_color=C.BRIGHT_RED if ep["failures_14d"] > 0
-                                             else C.BRIGHT_GREEN))
+    mem_lines.append(
+        _metric_row(
+            "failures 14d",
+            ep["failures_14d"],
+            width,
+            icon=fi,
+            icon_color=fc,
+            value_color=C.BRIGHT_RED if ep["failures_14d"] > 0 else C.BRIGHT_GREEN,
+        )
+    )
     ldc = data["last_dream_cycle"]
     age = _human_age(ldc) if ldc else "never"
     li = "✓" if ldc else "○"
     lc = C.BRIGHT_GREEN if ldc else C.DIM
-    mem_lines.append(_metric_row("last dream", age, width, icon=li, icon_color=lc,
-                                 value_color=C.BOLD if ldc else C.DIM))
+    mem_lines.append(
+        _metric_row(
+            "last dream", age, width, icon=li, icon_color=lc, value_color=C.BOLD if ldc else C.DIM
+        )
+    )
 
     # sparkline — aligned with _metric_row's 2-space lead + 2-space icon slot
     counts = [c for _, c in ep["daily"]]
@@ -396,17 +415,33 @@ def render(width=None, json_out=False, plain=False):
     le = data["lessons"]
     source = "lessons.jsonl" if not le["from_md_fallback"] else "LESSONS.md"
     le_lines = [""]
-    ai, ac = _health_icon(len(le["accepted"]) if le["accepted"] else le["count"],
-                          zero_is_good=False, low_is_good=False)
-    le_lines.append(_metric_row(
-        "accepted", len(le["accepted"]) if le["accepted"] else le["count"],
-        width, icon=ai, icon_color=ac,
-        suffix=f"(source: {source})"))
+    ai, ac = _health_icon(
+        len(le["accepted"]) if le["accepted"] else le["count"],
+        zero_is_good=False,
+        low_is_good=False,
+    )
+    le_lines.append(
+        _metric_row(
+            "accepted",
+            len(le["accepted"]) if le["accepted"] else le["count"],
+            width,
+            icon=ai,
+            icon_color=ac,
+            suffix=f"(source: {source})",
+        )
+    )
     pi = "○" if le["provisional"] == 0 else "◐"
     pc = C.DIM if le["provisional"] == 0 else C.BRIGHT_YELLOW
-    le_lines.append(_metric_row("provisional", le["provisional"], width,
-                                icon=pi, icon_color=pc,
-                                value_color=C.BOLD if le["provisional"] > 0 else C.DIM))
+    le_lines.append(
+        _metric_row(
+            "provisional",
+            le["provisional"],
+            width,
+            icon=pi,
+            icon_color=pc,
+            value_color=C.BOLD if le["provisional"] > 0 else C.DIM,
+        )
+    )
 
     shown = 0
     if le["accepted"]:
@@ -423,13 +458,16 @@ def render(width=None, json_out=False, plain=False):
             le_lines.append("  " + bullet + paint(claim, C.WHITE) + age_str)
             shown += 1
         if len(le["accepted"]) > shown:
-            le_lines.append("  " + paint(
-                f"    …and {len(le['accepted']) - shown} more", C.DIM))
+            le_lines.append("  " + paint(f"    …and {len(le['accepted']) - shown} more", C.DIM))
     elif le["count"] > 0 and le["from_md_fallback"]:
         le_lines.append("")
-        le_lines.append("  " + paint(
-            f"  {le['count']} seed lessons in LESSONS.md "
-            f"(none graduated yet — run learn.py)", C.DIM))
+        le_lines.append(
+            "  "
+            + paint(
+                f"  {le['count']} seed lessons in LESSONS.md (none graduated yet — run learn.py)",
+                C.DIM,
+            )
+        )
     le_lines.append("")
     out.append(_boxed("LESSONS", le_lines, width, accent=C.BRIGHT_MAGENTA))
     out.append("")
@@ -439,20 +477,41 @@ def render(width=None, json_out=False, plain=False):
     c_lines = [""]
     si = "●" if cs["staged"] > 0 else "○"
     sc = C.BRIGHT_YELLOW if cs["staged"] > 0 else C.DIM
-    c_lines.append(_metric_row("staged", cs["staged"], width,
-                               icon=si, icon_color=sc,
-                               value_color=C.BOLD if cs["staged"] > 0 else C.DIM,
-                               suffix="(awaiting review)" if cs["staged"] > 0 else ""))
+    c_lines.append(
+        _metric_row(
+            "staged",
+            cs["staged"],
+            width,
+            icon=si,
+            icon_color=sc,
+            value_color=C.BOLD if cs["staged"] > 0 else C.DIM,
+            suffix="(awaiting review)" if cs["staged"] > 0 else "",
+        )
+    )
     gi = "✓" if cs["graduated"] > 0 else "○"
     gc = C.BRIGHT_GREEN if cs["graduated"] > 0 else C.DIM
-    c_lines.append(_metric_row("graduated", cs["graduated"], width,
-                               icon=gi, icon_color=gc,
-                               value_color=C.BOLD if cs["graduated"] > 0 else C.DIM))
+    c_lines.append(
+        _metric_row(
+            "graduated",
+            cs["graduated"],
+            width,
+            icon=gi,
+            icon_color=gc,
+            value_color=C.BOLD if cs["graduated"] > 0 else C.DIM,
+        )
+    )
     ri = "✗" if cs["rejected"] > 0 else "○"
     rc = C.BRIGHT_RED if cs["rejected"] > 0 else C.DIM
-    c_lines.append(_metric_row("rejected", cs["rejected"], width,
-                               icon=ri, icon_color=rc,
-                               value_color=C.BOLD if cs["rejected"] > 0 else C.DIM))
+    c_lines.append(
+        _metric_row(
+            "rejected",
+            cs["rejected"],
+            width,
+            icon=ri,
+            icon_color=rc,
+            value_color=C.BOLD if cs["rejected"] > 0 else C.DIM,
+        )
+    )
     c_lines.append("")
     out.append(_boxed("CANDIDATES", c_lines, width, accent=C.BRIGHT_YELLOW))
     out.append("")
@@ -461,12 +520,18 @@ def render(width=None, json_out=False, plain=False):
     sk = data["skills"]
     fs = data["failing_skills"]
     sk_lines = [""]
-    sk_lines.append(_metric_row("loaded", sk["count"], width,
-                                icon="●", icon_color=C.BRIGHT_CYAN))
+    sk_lines.append(_metric_row("loaded", sk["count"], width, icon="●", icon_color=C.BRIGHT_CYAN))
     fi_icon, fi_color = _health_icon(len(fs))
-    sk_lines.append(_metric_row("failing", len(fs), width,
-                                icon=fi_icon, icon_color=fi_color,
-                                value_color=C.BRIGHT_RED if fs else C.BRIGHT_GREEN))
+    sk_lines.append(
+        _metric_row(
+            "failing",
+            len(fs),
+            width,
+            icon=fi_icon,
+            icon_color=fi_color,
+            value_color=C.BRIGHT_RED if fs else C.BRIGHT_GREEN,
+        )
+    )
     if sk["names"]:
         sk_lines.append("")
         prefix_indent = "      "
@@ -475,7 +540,7 @@ def render(width=None, json_out=False, plain=False):
         buf_visible = 0
         rows = []
         for i, name in enumerate(sk["names"]):
-            is_last = (i == len(sk["names"]) - 1)
+            is_last = i == len(sk["names"]) - 1
             piece_visible = len(name) + (0 if is_last else 2)
             if buffered and buf_visible + piece_visible > max_plain:
                 rows.append(buffered)
@@ -491,17 +556,26 @@ def render(width=None, json_out=False, plain=False):
     if fs:
         sk_lines.append("")
         for name, n in fs[:3]:
-            sk_lines.append("  " + paint("  ⚠ ", C.BRIGHT_YELLOW) +
-                            paint(name.ljust(20), C.BRIGHT_RED) +
-                            paint(f"{n} failures", C.DIM))
+            sk_lines.append(
+                "  "
+                + paint("  ⚠ ", C.BRIGHT_YELLOW)
+                + paint(name.ljust(20), C.BRIGHT_RED)
+                + paint(f"{n} failures", C.DIM)
+            )
     sk_lines.append("")
     out.append(_boxed("SKILLS", sk_lines, width, accent=C.GREEN))
 
     # ── footer hint ──
     out.append("")
-    out.append(paint("  learn:  ", C.DIM) + paint("python3 .agent/tools/learn.py \"…\"", C.BRIGHT_CYAN))
-    out.append(paint("  recall: ", C.DIM) + paint("python3 .agent/tools/recall.py \"…\"", C.BRIGHT_CYAN))
-    out.append(paint("  dream:  ", C.DIM) + paint("python3 .agent/memory/auto_dream.py", C.BRIGHT_CYAN))
+    out.append(
+        paint("  learn:  ", C.DIM) + paint('python3 .agent/tools/learn.py "…"', C.BRIGHT_CYAN)
+    )
+    out.append(
+        paint("  recall: ", C.DIM) + paint('python3 .agent/tools/recall.py "…"', C.BRIGHT_CYAN)
+    )
+    out.append(
+        paint("  dream:  ", C.DIM) + paint("python3 .agent/memory/auto_dream.py", C.BRIGHT_CYAN)
+    )
 
     return "\n".join(out)
 
@@ -509,10 +583,15 @@ def render(width=None, json_out=False, plain=False):
 def main():
     p = argparse.ArgumentParser(description="Agent state dashboard.")
     p.add_argument("--json", action="store_true", help="Emit JSON.")
-    p.add_argument("--plain", action="store_true",
-                   help="Disable ANSI color. Also triggered by NO_COLOR env.")
-    p.add_argument("--width", type=int, default=None,
-                   help="Override terminal width (default: auto-detect, max 80).")
+    p.add_argument(
+        "--plain", action="store_true", help="Disable ANSI color. Also triggered by NO_COLOR env."
+    )
+    p.add_argument(
+        "--width",
+        type=int,
+        default=None,
+        help="Override terminal width (default: auto-detect, max 80).",
+    )
     args = p.parse_args()
     plain = args.plain or bool(os.environ.get("NO_COLOR"))
     print(render(width=args.width, json_out=args.json, plain=plain))

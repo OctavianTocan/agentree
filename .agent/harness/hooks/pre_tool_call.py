@@ -1,4 +1,5 @@
 """Runs before every tool call. Enforces permissions and tool schemas."""
+
 import json, os
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")

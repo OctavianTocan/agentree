@@ -5,6 +5,7 @@ This creates the harness for future retrieval, evals, prompt shrinking, and
 optional open-weight fine-tuning. It does not train a model, call an API, or
 send telemetry.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -114,7 +115,10 @@ def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
 
 def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("".join(json.dumps(record, separators=(",", ":")) + "\n" for record in records), encoding="utf-8")
+    path.write_text(
+        "".join(json.dumps(record, separators=(",", ":")) + "\n" for record in records),
+        encoding="utf-8",
+    )
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -155,7 +159,9 @@ def normalized_run(record: dict[str, Any], idx: int, project: str) -> dict[str, 
     created_at = iso(record.get("created_at") or record.get("timestamp")) or now_iso()
     domain = slug(record.get("domain"), "general")
     workflow = slug(record.get("workflow"), "general")
-    run_id = str(record.get("id") or f"run_{sha256(f'{created_at}|{domain}|{workflow}|{idx}')[:16]}")
+    run_id = str(
+        record.get("id") or f"run_{sha256(f'{created_at}|{domain}|{workflow}|{idx}')[:16]}"
+    )
     return {
         **record,
         "id": run_id,
@@ -200,7 +206,9 @@ def trace_record(run: dict[str, Any]) -> dict[str, Any]:
         "failure_modes": [str(x) for x in as_list(run.get("failure_modes"))],
         "trainable": bool(run["trainable"]),
         "target_use": [str(x) for x in as_list(run.get("target_use") or ["retrieval", "eval"])],
-        "model_target": run.get("model_target") if isinstance(run.get("model_target"), dict) else {
+        "model_target": run.get("model_target")
+        if isinstance(run.get("model_target"), dict)
+        else {
             "family": "open_weight_model_agnostic",
             "size_class": "unknown",
             "method": "unknown",
@@ -213,8 +221,13 @@ def training_example(run: dict[str, Any], trace: dict[str, Any]) -> dict[str, An
     if not run["trainable"]:
         return None
     return {
-        "instruction": str(run.get("instruction") or "Complete this approved workflow using the provided context card."),
-        "context": str(run.get("context") or f"Use the {run['domain']}_{run['workflow']} context card."),
+        "instruction": str(
+            run.get("instruction")
+            or "Complete this approved workflow using the provided context card."
+        ),
+        "context": str(
+            run.get("context") or f"Use the {run['domain']}_{run['workflow']} context card."
+        ),
         "input": str(run.get("input_redacted") or ""),
         "output": str(run.get("output_approved") or ""),
         "metadata": {
@@ -238,14 +251,22 @@ def eval_case(run: dict[str, Any], trace: dict[str, Any]) -> dict[str, Any] | No
         "domain": run["domain"],
         "workflow": run["workflow"],
         "input_redacted": str(run.get("input_redacted") or ""),
-        "expected_behavior": unique_strings(as_list(run.get("expected_behavior")) or [run.get("output_summary") or "Match the human-approved output intent."]),
-        "forbidden_behavior": unique_strings(as_list(run.get("forbidden_behavior")) + as_list(run.get("failure_modes"))),
-        "rubric": unique_strings(as_list(run.get("rubric")) or [
-            "Use only redacted/supplied facts.",
-            "Separate facts from assumptions.",
-            "Do not invent missing details.",
-            "Respect the workflow's human approval gates.",
-        ]),
+        "expected_behavior": unique_strings(
+            as_list(run.get("expected_behavior"))
+            or [run.get("output_summary") or "Match the human-approved output intent."]
+        ),
+        "forbidden_behavior": unique_strings(
+            as_list(run.get("forbidden_behavior")) + as_list(run.get("failure_modes"))
+        ),
+        "rubric": unique_strings(
+            as_list(run.get("rubric"))
+            or [
+                "Use only redacted/supplied facts.",
+                "Separate facts from assumptions.",
+                "Do not invent missing details.",
+                "Respect the workflow's human approval gates.",
+            ]
+        ),
         "tags": unique_strings(as_list(run.get("eval_tags")) + [run["domain"], run["workflow"]]),
         "source_trace_ids": [trace["id"]],
     }
@@ -258,12 +279,24 @@ def grouped_runs(runs: list[dict[str, Any]]) -> dict[tuple[str, str], list[dict[
     return groups
 
 
-def context_card(domain: str, workflow: str, runs: list[dict[str, Any]], eval_refs: list[str]) -> dict[str, Any]:
-    stable_rules = unique_strings([rule for run in runs for rule in as_list(run.get("stable_rules"))])
-    tool_contracts = unique_strings([contract for run in runs for contract in as_list(run.get("tool_contracts"))])
-    approval_gates = unique_strings([gate for run in runs for gate in as_list(run.get("human_approval_required_for"))])
+def context_card(
+    domain: str, workflow: str, runs: list[dict[str, Any]], eval_refs: list[str]
+) -> dict[str, Any]:
+    stable_rules = unique_strings(
+        [rule for run in runs for rule in as_list(run.get("stable_rules"))]
+    )
+    tool_contracts = unique_strings(
+        [contract for run in runs for contract in as_list(run.get("tool_contracts"))]
+    )
+    approval_gates = unique_strings(
+        [gate for run in runs for gate in as_list(run.get("human_approval_required_for"))]
+    )
     if not approval_gates:
-        approval_gates = ["client-facing messages", "compliance-sensitive outputs", "PII-bearing outputs"]
+        approval_gates = [
+            "client-facing messages",
+            "compliance-sensitive outputs",
+            "PII-bearing outputs",
+        ]
     after_values = [safe_num(run.get("context_tokens_after")) for run in runs]
     after_clean = [v for v in after_values if v is not None]
     token_budget = int(sum(after_clean) / len(after_clean)) if after_clean else 1000
@@ -272,7 +305,12 @@ def context_card(domain: str, workflow: str, runs: list[dict[str, Any]], eval_re
         "domain": domain,
         "workflow": workflow,
         "goal": str(runs[0].get("goal") or f"Make {workflow} reusable for {domain} workflows."),
-        "stable_rules": stable_rules or ["Use only supplied facts.", "Ask for missing required fields.", "Keep human approval gates explicit."],
+        "stable_rules": stable_rules
+        or [
+            "Use only supplied facts.",
+            "Ask for missing required fields.",
+            "Keep human approval gates explicit.",
+        ],
         "tool_contracts": tool_contracts,
         "human_approval_required_for": approval_gates,
         "source_trace_count": len(runs),
@@ -286,32 +324,32 @@ def context_card_md(card: dict[str, Any]) -> str:
     def bullets(values: list[Any]) -> str:
         return "\n".join(f"- {value}" for value in values) if values else "- none yet"
 
-    return f"""# {card['domain']} / {card['workflow']} Context Card
+    return f"""# {card["domain"]} / {card["workflow"]} Context Card
 
-ID: `{card['id']}`
-Version: `{card['version']}`
-Token budget: `{card['token_budget']}`
-Source traces: `{card['source_trace_count']}`
+ID: `{card["id"]}`
+Version: `{card["version"]}`
+Token budget: `{card["token_budget"]}`
+Source traces: `{card["source_trace_count"]}`
 
 ## Goal
 
-{card['goal']}
+{card["goal"]}
 
 ## Stable Rules
 
-{bullets(card['stable_rules'])}
+{bullets(card["stable_rules"])}
 
 ## Tool Contracts
 
-{bullets(card['tool_contracts'])}
+{bullets(card["tool_contracts"])}
 
 ## Human Approval Required For
 
-{bullets(card['human_approval_required_for'])}
+{bullets(card["human_approval_required_for"])}
 
 ## Eval References
 
-{bullets(card['eval_refs'])}
+{bullets(card["eval_refs"])}
 """
 
 
@@ -331,7 +369,9 @@ def workflow_metrics(runs: list[dict[str, Any]], eval_count: int) -> dict[str, A
         "eval_cases": eval_count,
         "acceptance_rate": acceptance_rate,
         "slm_candidate": trainable >= 500 and acceptance_rate >= 0.8,
-        "reason": "High-volume, high-acceptance, redacted workflow." if trainable >= 500 and acceptance_rate >= 0.8 else "Keep collecting approved, redacted examples before considering adapter work.",
+        "reason": "High-volume, high-acceptance, redacted workflow."
+        if trainable >= 500 and acceptance_rate >= 0.8
+        else "Keep collecting approved, redacted examples before considering adapter work.",
     }
 
 
@@ -347,7 +387,11 @@ def build_metrics(runs: list[dict[str, Any]], eval_cases: list[dict[str, Any]]) 
     after_clean = [v for v in after_values if v is not None]
     avg_before = round(sum(before_clean) / len(before_clean), 2) if before_clean else None
     avg_after = round(sum(after_clean) / len(after_clean), 2) if after_clean else None
-    reduction = round((avg_before - avg_after) / avg_before * 100, 2) if avg_before and avg_after is not None else None
+    reduction = (
+        round((avg_before - avg_after) / avg_before * 100, 2)
+        if avg_before and avg_after is not None
+        else None
+    )
     eval_by_workflow: dict[tuple[str, str], int] = {}
     for case in eval_cases:
         key = (str(case.get("domain")), str(case.get("workflow")))
@@ -370,7 +414,9 @@ def build_metrics(runs: list[dict[str, Any]], eval_cases: list[dict[str, Any]]) 
             "workflow_family_corpus": "2000-10000+ clean examples",
         },
         "workflows": {
-            f"{domain}/{workflow}": workflow_metrics(group, eval_by_workflow.get((domain, workflow), 0))
+            f"{domain}/{workflow}": workflow_metrics(
+                group, eval_by_workflow.get((domain, workflow), 0)
+            )
             for (domain, workflow), group in sorted(grouped_runs(runs).items())
         },
     }
@@ -379,14 +425,18 @@ def build_metrics(runs: list[dict[str, Any]], eval_cases: list[dict[str, Any]]) 
 def export(args: argparse.Namespace) -> Path:
     agent_root = Path(args.agent_root).resolve()
     flywheel_dir = agent_root / "flywheel"
-    input_path = Path(args.approved_runs) if args.approved_runs else flywheel_dir / "approved-runs.jsonl"
+    input_path = (
+        Path(args.approved_runs) if args.approved_runs else flywheel_dir / "approved-runs.jsonl"
+    )
     out_dir = Path(args.out) if args.out else flywheel_dir / "exports" / args.date
 
     raw_runs, input_quality = read_jsonl(input_path)
     runs = [normalized_run(record, idx, args.project) for idx, record in enumerate(raw_runs)]
     traces = [trace_record(run) for run in runs]
     trace_by_run = {run["id"]: trace for run, trace in zip(runs, traces)}
-    training_examples = [example for run in runs if (example := training_example(run, trace_by_run[run["id"]]))]
+    training_examples = [
+        example for run in runs if (example := training_example(run, trace_by_run[run["id"]]))
+    ]
     eval_cases = [case for run in runs if (case := eval_case(run, trace_by_run[run["id"]]))]
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -414,7 +464,7 @@ def export(args: argparse.Namespace) -> Path:
         out_dir / "README.md",
         f"""# Data Flywheel Export
 
-Generated: {metrics['generated_at']}
+Generated: {metrics["generated_at"]}
 
 Artifacts:
 
@@ -432,7 +482,9 @@ moving any artifact outside `.agent/flywheel/`.
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Export approved runs into local data-flywheel artifacts.")
+    parser = argparse.ArgumentParser(
+        description="Export approved runs into local data-flywheel artifacts."
+    )
     parser.add_argument("--agent-root", default=".agent")
     parser.add_argument("--approved-runs", default="")
     parser.add_argument("--out", default="")

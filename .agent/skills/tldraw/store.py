@@ -15,6 +15,7 @@ pattern as memory/render_lessons.py) so concurrent append / archive
 calls serialize instead of corrupting the file. Windows (no fcntl) falls
 through without locking — safe for single-user repos.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,6 +43,7 @@ _MAX_RESAMPLE = 8
 
 try:
     import fcntl
+
     _HAS_FLOCK = True
 except ImportError:
     _HAS_FLOCK = False
@@ -57,11 +59,13 @@ if not _HAS_FLOCK:
         "fcntl unavailable; snapshots.jsonl is serialized by a process-"
         "local threading lock only. Safe for single-process use; not "
         "safe for concurrent writers across multiple OS processes.",
-        RuntimeWarning, stacklevel=2,
+        RuntimeWarning,
+        stacklevel=2,
     )
 
 
 # ── helpers ────────────────────────────────────────────────────────────
+
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
@@ -98,6 +102,7 @@ def _require_valid_sid(sid: str) -> str:
 
 
 # ── filesystem primitives ─────────────────────────────────────────────
+
 
 def _ensure_dirs() -> None:
     os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
@@ -156,16 +161,15 @@ def _read_jsonl_locked(f) -> list[dict]:
         try:
             out.append(json.loads(raw))
         except json.JSONDecodeError as e:
-            print(f"[tldraw/store] skipping malformed {JSONL_PATH}:{lineno}: {e}",
-                  file=sys.stderr)
+            print(f"[tldraw/store] skipping malformed {JSONL_PATH}:{lineno}: {e}", file=sys.stderr)
     return out
 
 
 # ── shape-payload normalization ───────────────────────────────────────
 
+
 def _coerce_shapes(payload) -> list:
-    shapes = payload["shapes"] if isinstance(payload, dict) and "shapes" in payload \
-             else payload
+    shapes = payload["shapes"] if isinstance(payload, dict) and "shapes" in payload else payload
     if not isinstance(shapes, list):
         raise ValueError("shapes must be a list or a {'shapes': [...]} envelope")
     return shapes
@@ -173,8 +177,10 @@ def _coerce_shapes(payload) -> list:
 
 # ── public API ────────────────────────────────────────────────────────
 
-def snapshot(shapes_payload, label: str, tags=None, note: str = "",
-             when: Optional[datetime] = None) -> dict:
+
+def snapshot(
+    shapes_payload, label: str, tags=None, note: str = "", when: Optional[datetime] = None
+) -> dict:
     """Persist the current canvas state. Returns the metadata record."""
     _ensure_dirs()
     shapes = _coerce_shapes(shapes_payload)
@@ -200,8 +206,12 @@ def snapshot(shapes_payload, label: str, tags=None, note: str = "",
         )
 
     full = {
-        "id": sid, "label": label_clean, "tags": tags_list, "note": note or "",
-        "created_at": when.isoformat(), "shape_count": len(shapes),
+        "id": sid,
+        "label": label_clean,
+        "tags": tags_list,
+        "note": note or "",
+        "created_at": when.isoformat(),
+        "shape_count": len(shapes),
         "shapes": shapes,
     }
     _atomic_write(shape_path, json.dumps(full, ensure_ascii=False, indent=2) + "\n")
@@ -218,8 +228,7 @@ def snapshot(shapes_payload, label: str, tags=None, note: str = "",
     return meta
 
 
-def list_snapshots(tag: Optional[str] = None,
-                   include_archived: bool = False) -> list[dict]:
+def list_snapshots(tag: Optional[str] = None, include_archived: bool = False) -> list[dict]:
     if not os.path.exists(JSONL_PATH):
         return []
     with _locked_jsonl(JSONL_PATH) as f:
@@ -262,8 +271,7 @@ def archive_snapshot(sid: str) -> dict:
                 r["archived_at"] = _now_utc().isoformat()
                 hit = r
         if hit is None:
-            raise RuntimeError(
-                f"snapshot {sid} has no metadata in snapshots.jsonl")
+            raise RuntimeError(f"snapshot {sid} has no metadata in snapshots.jsonl")
         body = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records)
         f.seek(0)
         f.truncate()
@@ -300,9 +308,11 @@ def _render_index(records: Optional[list[dict]] = None) -> None:
         note = (r.get("note") or "").replace("|", "\\|").replace("\n", " ")
         if len(note) > 80:
             note = note[:77] + "..."
-        return (f"| `{r.get('id','')}` | {r.get('label','')} | {tags} | "
-                f"{r.get('shape_count', 0)} | {r.get('created_at','')} | "
-                f"{note or '-'} |")
+        return (
+            f"| `{r.get('id', '')}` | {r.get('label', '')} | {tags} | "
+            f"{r.get('shape_count', 0)} | {r.get('created_at', '')} | "
+            f"{note or '-'} |"
+        )
 
     table_header = [
         "| id | label | tags | shapes | created | note |",
@@ -320,6 +330,7 @@ def _render_index(records: Optional[list[dict]] = None) -> None:
 
 # ── CLI ───────────────────────────────────────────────────────────────
 
+
 def _read_shapes_from_args(args) -> list:
     if args.file:
         with open(args.file, encoding="utf-8") as f:
@@ -329,16 +340,16 @@ def _read_shapes_from_args(args) -> list:
     else:
         raw = sys.stdin.read()
         if not raw.strip():
-            raise SystemExit("error: no canvas JSON on stdin "
-                             "(use --file or --shapes-json to supply it)")
+            raise SystemExit(
+                "error: no canvas JSON on stdin (use --file or --shapes-json to supply it)"
+            )
         data = json.loads(raw)
     return _coerce_shapes(data)
 
 
 def _cmd_snapshot(args) -> int:
     shapes = _read_shapes_from_args(args)
-    meta = snapshot(shapes, label=args.label, tags=args.tags or [],
-                    note=args.note or "")
+    meta = snapshot(shapes, label=args.label, tags=args.tags or [], note=args.note or "")
     print(json.dumps(meta, ensure_ascii=False, indent=2))
     return 0
 
@@ -354,8 +365,9 @@ def _cmd_list(args) -> int:
     for r in rows:
         tags = ",".join(r.get("tags") or []) or "-"
         flag = " [archived]" if r.get("status") == "archived" else ""
-        print(f"{r.get('id')}  {r.get('label')}  tags={tags}  "
-              f"shapes={r.get('shape_count', 0)}{flag}")
+        print(
+            f"{r.get('id')}  {r.get('label')}  tags={tags}  shapes={r.get('shape_count', 0)}{flag}"
+        )
     return 0
 
 
@@ -370,8 +382,9 @@ def _cmd_archive(args) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="tldraw-store",
-                                description="Snapshot store for the tldraw skill.")
+    p = argparse.ArgumentParser(
+        prog="tldraw-store", description="Snapshot store for the tldraw skill."
+    )
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("snapshot", help="persist a canvas state")

@@ -4,6 +4,7 @@ Use this when a previous rejection was wrong, or when new evidence changes
 the picture. Decision history and rejection_count survive the reopen — the
 next reviewer sees the full churn log.
 """
+
 import os, sys, argparse
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -26,8 +27,7 @@ def main():
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"reopened {args.candidate_id} "
-          f"(rejection_count={cand.get('rejection_count', 0)})")
+    print(f"reopened {args.candidate_id} (rejection_count={cand.get('rejection_count', 0)})")
 
 
 if __name__ == "__main__":

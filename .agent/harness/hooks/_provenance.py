@@ -1,4 +1,5 @@
 """Shared provenance helpers for episodic entries. Cached per-process."""
+
 import os, subprocess
 
 AGENT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -56,7 +57,9 @@ def commit_sha():
         try:
             out = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
-                capture_output=True, text=True, timeout=2,
+                capture_output=True,
+                text=True,
+                timeout=2,
                 cwd=AGENT_ROOT,
             )
             _CACHED_COMMIT = out.stdout.strip() if out.returncode == 0 else ""

@@ -4,6 +4,7 @@ This is an append-only transition: a new row with the same lesson id is
 written to lessons.jsonl with status='retracted'. LESSONS.md is then
 re-rendered from the structured source of truth.
 """
+
 import argparse
 import datetime
 import os
@@ -36,9 +37,7 @@ def retract_lesson(lesson_id, rationale, reviewer="host-agent", semantic_dir=SEM
 
     status = latest.get("status")
     if status != "accepted":
-        raise ValueError(
-            f"lesson {lesson_id} is not retractable (current status: {status})"
-        )
+        raise ValueError(f"lesson {lesson_id} is not retractable (current status: {status})")
 
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
     updated = {
@@ -55,9 +54,7 @@ def retract_lesson(lesson_id, rationale, reviewer="host-agent", semantic_dir=SEM
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Retract an accepted lesson by lesson id."
-    )
+    parser = argparse.ArgumentParser(description="Retract an accepted lesson by lesson id.")
     parser.add_argument("lesson_id")
     parser.add_argument(
         "--rationale",

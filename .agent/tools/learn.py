@@ -18,6 +18,7 @@ If graduation fails (e.g., exact-duplicate heuristic reject), the staged
 candidate file is removed so `show.py` / `REVIEW_QUEUE.md` don't show
 orphaned dead-ends.
 """
+
 import argparse, datetime, json, os, subprocess, sys
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -83,27 +84,39 @@ def stage(claim, conditions, source="learn", importance=7):
 
 
 def main():
-    p = argparse.ArgumentParser(
-        description="Teach the agent a lesson in one command.")
+    p = argparse.ArgumentParser(description="Teach the agent a lesson in one command.")
     p.add_argument("claim", help="The lesson, phrased as a rule or principle.")
-    p.add_argument("--rationale", default=None,
-                   help="Why this lesson holds. Recommended. If omitted, a "
-                        "timestamp-only rationale is used.")
-    p.add_argument("--conditions", nargs="*", default=None,
-                   help="Optional trigger keywords. Inferred from claim words "
-                        "if omitted.")
-    p.add_argument("--provisional", action="store_true",
-                   help="Graduate as provisional (probationary) — safer for "
-                        "experimental rules.")
-    p.add_argument("--stage-only", action="store_true",
-                   help="Stage the candidate but don't auto-graduate. Useful "
-                        "if you want a reviewer to see it first.")
+    p.add_argument(
+        "--rationale",
+        default=None,
+        help="Why this lesson holds. Recommended. If omitted, a timestamp-only rationale is used.",
+    )
+    p.add_argument(
+        "--conditions",
+        nargs="*",
+        default=None,
+        help="Optional trigger keywords. Inferred from claim words if omitted.",
+    )
+    p.add_argument(
+        "--provisional",
+        action="store_true",
+        help="Graduate as provisional (probationary) — safer for experimental rules.",
+    )
+    p.add_argument(
+        "--stage-only",
+        action="store_true",
+        help="Stage the candidate but don't auto-graduate. Useful "
+        "if you want a reviewer to see it first.",
+    )
     args = p.parse_args()
 
     claim = args.claim.strip()
     if len(claim) < 20:
-        print(f"ERROR: claim too short ({len(claim)} chars, need >=20). "
-              f"Heuristic check would reject this.", file=sys.stderr)
+        print(
+            f"ERROR: claim too short ({len(claim)} chars, need >=20). "
+            f"Heuristic check would reject this.",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     conditions = args.conditions
@@ -123,20 +136,24 @@ def main():
         print("\n(stopping here — run graduate.py to accept)")
         return
 
-    rationale = args.rationale or f"manual via learn.py at {datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    rationale = (
+        args.rationale
+        or f"manual via learn.py at {datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+    )
     grad_args = [
         sys.executable,
         os.path.join(BASE, "tools", "graduate.py"),
         cid,
-        "--rationale", rationale,
-        "--reviewer", "learn.py",
+        "--rationale",
+        rationale,
+        "--reviewer",
+        "learn.py",
     ]
     if args.provisional:
         grad_args.append("--provisional")
     result = subprocess.run(grad_args, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"\nERROR: graduation failed (exit {result.returncode})",
-              file=sys.stderr)
+        print(f"\nERROR: graduation failed (exit {result.returncode})", file=sys.stderr)
         if result.stdout:
             print(result.stdout, file=sys.stderr)
         if result.stderr:
@@ -151,25 +168,26 @@ def main():
         # lesson wasn't partially written, so preserve the staged file
         # for manual inspection and a retry via graduate.py.
         lesson_written = _lesson_already_appended(cid)
-        is_heuristic_reject = (result.returncode == 2 and not lesson_written)
+        is_heuristic_reject = result.returncode == 2 and not lesson_written
         if os.path.isfile(path) and is_heuristic_reject:
             try:
                 os.remove(path)
-                print(f"(cleaned up orphaned candidate at {path})",
-                      file=sys.stderr)
+                print(f"(cleaned up orphaned candidate at {path})", file=sys.stderr)
             except OSError:
                 pass
         elif lesson_written:
             print(
                 f"(preserved staged file {path} — lesson_{cid} already in "
                 f"lessons.jsonl; re-run graduate.py to complete the move)",
-                file=sys.stderr)
+                file=sys.stderr,
+            )
         else:
             print(
                 f"(preserved staged file {path} — graduation exited {result.returncode} "
                 f"pre-append; inspect or re-run graduate.py, then delete "
                 f"manually if unrecoverable)",
-                file=sys.stderr)
+                file=sys.stderr,
+            )
         sys.exit(result.returncode)
     print("\n" + result.stdout.strip())
 

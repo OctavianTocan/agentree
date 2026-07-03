@@ -4,6 +4,7 @@ Host-agent workflow: run this, pick the top N, review each with graduate.py
 or reject.py. Priority = cluster_size * canonical_salience * age_factor, so
 recurring + salient + aging items get attention first.
 """
+
 import os, sys, json, argparse
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,23 +17,22 @@ CANDIDATES = os.path.join(BASE, "memory/candidates")
 
 def main():
     p = argparse.ArgumentParser(description="List candidate lessons.")
-    p.add_argument("--status", default="staged",
-                   choices=["staged", "rejected", "graduated"])
-    p.add_argument("--sort", default="priority",
-                   choices=["priority", "age"])
-    p.add_argument("--limit", type=int, default=0,
-                   help="Max to return; 0 = no limit.")
+    p.add_argument("--status", default="staged", choices=["staged", "rejected", "graduated"])
+    p.add_argument("--sort", default="priority", choices=["priority", "age"])
+    p.add_argument("--limit", type=int, default=0, help="Max to return; 0 = no limit.")
     p.add_argument("--format", default="human", choices=["human", "json"])
     args = p.parse_args()
 
     items = list_candidates(CANDIDATES, status=args.status, sort_by=args.sort)
     if args.limit:
-        items = items[:args.limit]
+        items = items[: args.limit]
 
     if args.format == "json":
-        print(json.dumps(
-            [{**c, "priority": round(candidate_priority(c), 3)} for c in items],
-            indent=2))
+        print(
+            json.dumps(
+                [{**c, "priority": round(candidate_priority(c), 3)} for c in items], indent=2
+            )
+        )
         return
 
     if not items:
@@ -53,8 +53,10 @@ def main():
         dec = c.get("decisions", [])
         if dec:
             last = dec[-1]
-            print(f"  last:       {last.get('action')} by "
-                  f"{last.get('reviewer')} @ {last.get('ts', '')[:19]}")
+            print(
+                f"  last:       {last.get('action')} by "
+                f"{last.get('reviewer')} @ {last.get('ts', '')[:19]}"
+            )
         print()
 
 

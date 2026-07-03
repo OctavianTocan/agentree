@@ -6,6 +6,7 @@ against current LESSONS.md) runs automatically so last-minute issues get
 caught. The rationale is REQUIRED — rubber-stamped promotions are the
 whole failure mode this layer is designed to prevent.
 """
+
 import os, sys, json, argparse, hashlib, datetime
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -39,13 +40,18 @@ def _lesson_id(candidate):
 def main():
     p = argparse.ArgumentParser(description="Graduate a staged candidate.")
     p.add_argument("candidate_id")
-    p.add_argument("--rationale", required=True,
-                   help="Why this lesson should be accepted. Required, not optional.")
+    p.add_argument(
+        "--rationale",
+        required=True,
+        help="Why this lesson should be accepted. Required, not optional.",
+    )
     p.add_argument("--reviewer", default="host-agent")
-    p.add_argument("--provisional", action="store_true",
-                   help="Accept as provisional (probationary) rather than full.")
-    p.add_argument("--supersedes", default=None,
-                   help="ID of an existing lesson this replaces.")
+    p.add_argument(
+        "--provisional",
+        action="store_true",
+        help="Accept as provisional (probationary) rather than full.",
+    )
+    p.add_argument("--supersedes", default=None, help="ID of an existing lesson this replaces.")
     args = p.parse_args()
 
     cand_path = os.path.join(CANDIDATES, f"{args.candidate_id}.json")
@@ -68,18 +74,17 @@ def main():
         None,
     )
     if prior_lesson:
-        print(f"retry detected: lesson {lesson_id} already in lessons.jsonl; "
-              f"completing candidate move")
+        print(
+            f"retry detected: lesson {lesson_id} already in lessons.jsonl; "
+            f"completing candidate move"
+        )
 
         # Guard: lessons.jsonl row must carry the metadata we're about to
         # sync into the candidate file. A legacy / hand-edited / sparse row
         # missing reviewer or rationale would otherwise get silently mixed
         # with retry args (candidate gets args.*, jsonl stays missing) —
         # the exact drift this branch exists to prevent.
-        missing_fields = [
-            f for f in ("reviewer", "rationale")
-            if not prior_lesson.get(f)
-        ]
+        missing_fields = [f for f in ("reviewer", "rationale") if not prior_lesson.get(f)]
         if missing_fields:
             print(
                 f"ERROR: cannot complete retry — lessons.jsonl row "
@@ -103,31 +108,29 @@ def main():
         # above ensures prior_lesson has non-empty reviewer + rationale.
         retry_reviewer = prior_lesson["reviewer"]
         retry_rationale = prior_lesson["rationale"]
-        retry_provisional = (prior_lesson.get("status") == "provisional")
+        retry_provisional = prior_lesson.get("status") == "provisional"
 
         diffs = []
         if retry_reviewer != args.reviewer:
             diffs.append(f"reviewer: {args.reviewer!r} → {retry_reviewer!r}")
         if retry_provisional != args.provisional:
-            diffs.append(
-                f"provisional: {args.provisional} → {retry_provisional}"
-            )
+            diffs.append(f"provisional: {args.provisional} → {retry_provisional}")
         if retry_rationale != args.rationale:
-            diffs.append(
-                "rationale: overridden (see first-run text in lessons.jsonl)"
-            )
+            diffs.append("rationale: overridden (see first-run text in lessons.jsonl)")
         if diffs:
             print(
                 f"note: retry invocation metadata differs from the "
                 f"first-run record in lessons.jsonl. Honoring the "
                 f"original values so lessons.jsonl and the candidate "
-                f"file stay in sync:\n  "
-                + "\n  ".join(diffs),
+                f"file stay in sync:\n  " + "\n  ".join(diffs),
                 file=sys.stderr,
             )
 
         mark_graduated(
-            args.candidate_id, retry_reviewer, retry_rationale, CANDIDATES,
+            args.candidate_id,
+            retry_reviewer,
+            retry_rationale,
+            CANDIDATES,
             provisional=retry_provisional,
         )
         print(f"graduated {args.candidate_id} → lesson {lesson_id} (retry)")
@@ -141,13 +144,11 @@ def main():
     # is exactly what supersession is for.
     if args.supersedes:
         existing = "\n".join(
-            line for line in existing.splitlines()
-            if f"id={args.supersedes}" not in line
+            line for line in existing.splitlines() if f"id={args.supersedes}" not in line
         )
     check = heuristic_check(cand, existing)
     if not check["passed"]:
-        print(f"ERROR: candidate fails heuristic check: {check['reasons']}",
-              file=sys.stderr)
+        print(f"ERROR: candidate fails heuristic check: {check['reasons']}", file=sys.stderr)
         sys.exit(2)
 
     # Atomicity: write to semantic memory BEFORE moving the candidate.
@@ -177,7 +178,10 @@ def main():
 
     # Semantic writes survived — now move the candidate file.
     mark_graduated(
-        args.candidate_id, args.reviewer, args.rationale, CANDIDATES,
+        args.candidate_id,
+        args.reviewer,
+        args.rationale,
+        CANDIDATES,
         provisional=args.provisional,
     )
 

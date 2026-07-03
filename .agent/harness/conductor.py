@@ -1,4 +1,5 @@
 """Thin conductor loop. Reads files, calls the model, logs. No reasoning here."""
+
 import os, sys
 from context_budget import build_context
 from hooks.post_execution import log_execution

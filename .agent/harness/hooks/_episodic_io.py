@@ -14,11 +14,13 @@ On platforms without `fcntl` (native Windows Python) the lock is a
 no-op and behavior matches the pre-lock baseline. WSL, git-bash via
 Cygwin, macOS, and Linux all provide `fcntl`.
 """
+
 import json
 import os
 
 try:
     import fcntl  # POSIX
+
     _HAVE_FLOCK = True
 except ImportError:
     _HAVE_FLOCK = False

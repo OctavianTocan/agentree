@@ -1,4 +1,5 @@
 """Runs after every action. Appends a structured entry to episodic memory."""
+
 import datetime, os
 from ._provenance import build_source
 from ._episodic_io import append_jsonl
@@ -7,9 +8,17 @@ ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 EPISODIC = os.path.join(ROOT, "memory/episodic/AGENT_LEARNINGS.jsonl")
 
 
-def log_execution(skill_name, action, result, success, reflection="",
-                  importance=5, confidence=0.5, evidence_ids=None,
-                  pain_score=None):
+def log_execution(
+    skill_name,
+    action,
+    result,
+    success,
+    reflection="",
+    importance=5,
+    confidence=0.5,
+    evidence_ids=None,
+    pain_score=None,
+):
     """Log a structured episodic entry.
 
     pain_score: override the default (2 for success, 7 for failure). Pass

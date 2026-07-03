@@ -5,6 +5,7 @@ This script is copied into installed projects by `agentic-stack upgrade`. It
 keeps agent instructions stable even though Brain itself is a separate Rust
 binary and release stream.
 """
+
 from __future__ import annotations
 
 import argparse

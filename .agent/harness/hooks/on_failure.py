@@ -1,4 +1,5 @@
 """Failures are learning. High pain score + rewrite flag after repeat offenses."""
+
 import json, datetime, os
 from ._provenance import build_source
 from ._episodic_io import append_jsonl
@@ -35,15 +36,22 @@ def _count_recent_failures(skill_name):
     return count
 
 
-def on_failure(skill_name, action, error, context="", confidence=0.9,
-               evidence_ids=None, importance=None, pain_score=None):
+def on_failure(
+    skill_name,
+    action,
+    error,
+    context="",
+    confidence=0.9,
+    evidence_ids=None,
+    importance=None,
+    pain_score=None,
+):
     # Format reflection without the noisy `type(error).__name__:` prefix
     # when the caller passes a pre-formatted string (the common case for
     # hook callers). Only include the type name for actual Exception objects
     # where it carries diagnostic value.
     if isinstance(error, Exception):
-        _refl = (f"FAILURE in {skill_name}: {type(error).__name__}: "
-                 f"{str(error)[:200]}")
+        _refl = f"FAILURE in {skill_name}: {type(error).__name__}: {str(error)[:200]}"
     else:
         _refl = f"FAILURE in {skill_name}: {str(error)[:200]}"
 
@@ -69,8 +77,7 @@ def on_failure(skill_name, action, error, context="", confidence=0.9,
     recent = _count_recent_failures(skill_name) + 1
     if recent >= FAILURE_THRESHOLD:
         entry["reflection"] += (
-            f" | THIS SKILL HAS FAILED {recent} TIMES IN {WINDOW_DAYS}d. "
-            f"Flag for rewrite."
+            f" | THIS SKILL HAS FAILED {recent} TIMES IN {WINDOW_DAYS}d. Flag for rewrite."
         )
         entry["pain_score"] = 10
     return append_jsonl(EPISODIC, entry)

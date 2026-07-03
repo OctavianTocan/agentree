@@ -8,6 +8,7 @@ tool_input/tool_response structure used by the Claude Code hook so the
 importance scoring, reflection generation, and success classification stay
 consistent across harnesses.
 """
+
 import json
 import os
 import sys
@@ -19,8 +20,8 @@ sys.path.insert(0, os.path.join(AGENT_ROOT, "harness"))
 sys.path.insert(0, os.path.join(AGENT_ROOT, "tools"))
 
 from hooks.post_execution import log_execution  # noqa: E402
-from hooks.on_failure import on_failure        # noqa: E402
-import hooks.claude_code_post_tool as cc       # noqa: E402
+from hooks.on_failure import on_failure  # noqa: E402
+import hooks.claude_code_post_tool as cc  # noqa: E402
 
 
 _PI_TO_CANONICAL = {

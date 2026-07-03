@@ -5,6 +5,7 @@ sees the memory that matters for *this* task, not just the most salient memory
 in general. Always-on slots (PREFERENCES, WORKSPACE, permissions) are loaded
 whole regardless of query — they're cheap and safety-critical.
 """
+
 import json, os, re, sys
 from salience import salience_score
 from text import word_set, jaccard
@@ -60,19 +61,21 @@ def _top_episodes(query, k=5):
     query_words = word_set(query)
 
     def _score(e):
-        text = " ".join([
-            e.get("action", ""),
-            e.get("reflection", ""),
-            e.get("detail", ""),
-        ])
+        text = " ".join(
+            [
+                e.get("action", ""),
+                e.get("reflection", ""),
+                e.get("detail", ""),
+            ]
+        )
         rel = _relevance(text, query_words)
         return salience_score(e) * (RELEVANCE_FLOOR + (1.0 - RELEVANCE_FLOOR) * rel)
 
     entries.sort(key=_score, reverse=True)
     top = entries[:k]
     return "\n".join(
-        f"- [{e.get('timestamp','')[:10]}] {e.get('action','')}: "
-        f"{e.get('reflection', e.get('detail',''))}"
+        f"- [{e.get('timestamp', '')[:10]}] {e.get('action', '')}: "
+        f"{e.get('reflection', e.get('detail', ''))}"
         for e in top
     )
 
@@ -169,6 +172,7 @@ def build_context(user_input: str, budget: int = 88000):
     # Lazy import so a missing skill_loader doesn't kill context assembly.
     try:
         from skill_loader import progressive_load
+
         skills = progressive_load(user_input)
     except Exception:
         skills = []

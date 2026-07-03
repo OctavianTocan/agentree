@@ -22,6 +22,7 @@ then delegates to the shared importance scoring and episodic logging.
 Configured via .github/hooks/agentic-stack.json (installed by the
 copilot-cli adapter).
 """
+
 import json
 import os
 import sys
@@ -33,8 +34,8 @@ sys.path.insert(0, os.path.join(AGENT_ROOT, "harness"))
 sys.path.insert(0, os.path.join(AGENT_ROOT, "tools"))
 
 from hooks.post_execution import log_execution  # noqa: E402
-from hooks.on_failure import on_failure        # noqa: E402
-import hooks.claude_code_post_tool as cc       # noqa: E402
+from hooks.on_failure import on_failure  # noqa: E402
+import hooks.claude_code_post_tool as cc  # noqa: E402
 
 
 _COPILOT_TO_CANONICAL = {

@@ -1,4 +1,5 @@
 """Progressive disclosure: manifest always, full SKILL.md only when triggered."""
+
 import json, os
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
@@ -81,9 +82,11 @@ def progressive_load(user_input):
         content = load_skill_full(skill["name"])
         if not content:
             continue
-        loaded.append({
-            "name": skill["name"],
-            "constraints": skill.get("constraints", []),
-            "content": content,
-        })
+        loaded.append(
+            {
+                "name": skill["name"],
+                "constraints": skill.get("constraints", []),
+                "content": content,
+            }
+        )
     return loaded

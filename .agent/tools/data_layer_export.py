@@ -7,6 +7,7 @@ terminal dashboard.
 
 No network calls, no external dependencies, no telemetry.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -349,12 +350,16 @@ def resolve_category(record: dict[str, Any], rules: dict[str, Any]) -> str:
     return rules["default_category"]
 
 
-def normalize_agent_event(entry: dict[str, Any], idx: int, args: argparse.Namespace, rules: dict[str, Any]) -> dict[str, Any]:
+def normalize_agent_event(
+    entry: dict[str, Any], idx: int, args: argparse.Namespace, rules: dict[str, Any]
+) -> dict[str, Any]:
     source = entry.get("source") if isinstance(entry.get("source"), dict) else {}
     started = iso(entry.get("timestamp")) or now_iso()
     skill = str(entry.get("skill") or source.get("skill") or "unknown")
     action = str(entry.get("action") or "")
-    harness = normalize_harness(entry.get("harness") or source.get("harness") or source.get("skill") or skill)
+    harness = normalize_harness(
+        entry.get("harness") or source.get("harness") or source.get("skill") or skill
+    )
     profile_hash = hash_id(source.get("profile"))
     run_id_hash = hash_id(source.get("run_id"))
     duration_ms = safe_int(entry.get("duration_ms"))
@@ -374,7 +379,11 @@ def normalize_agent_event(entry: dict[str, Any], idx: int, args: argparse.Namesp
         "phase": str(entry.get("phase") or infer_phase(action, skill)),
         "run_type": str(entry.get("run_type") or "agent"),
         "result": str(entry.get("result") or "unknown"),
-        "status": "success" if entry.get("result") == "success" else "error" if entry.get("result") == "failure" else str(entry.get("result") or "unknown"),
+        "status": "success"
+        if entry.get("result") == "success"
+        else "error"
+        if entry.get("result") == "failure"
+        else str(entry.get("result") or "unknown"),
         "duration_ms": duration_ms,
         "importance": safe_int(entry.get("importance")),
         "pain_score": safe_int(entry.get("pain_score")),
@@ -393,8 +402,13 @@ def normalize_agent_event(entry: dict[str, Any], idx: int, args: argparse.Namesp
     return base
 
 
-def normalize_cron_run(entry: dict[str, Any], idx: int, args: argparse.Namespace, rules: dict[str, Any]) -> dict[str, Any]:
-    started = iso(entry.get("started_at") or entry.get("timestamp") or entry.get("created_at")) or now_iso()
+def normalize_cron_run(
+    entry: dict[str, Any], idx: int, args: argparse.Namespace, rules: dict[str, Any]
+) -> dict[str, Any]:
+    started = (
+        iso(entry.get("started_at") or entry.get("timestamp") or entry.get("created_at"))
+        or now_iso()
+    )
     finished = iso(entry.get("finished_at") or entry.get("ended_at"))
     start_dt = parse_time(started)
     finish_dt = parse_time(finished)
@@ -423,7 +437,8 @@ def normalize_cron_run(entry: dict[str, Any], idx: int, args: argparse.Namespace
         "tokens_out_estimate": tokens_out,
         "tokens_total_estimate": (tokens_in or 0) + (tokens_out or 0) or None,
         "cost_estimate_usd": safe_num(entry.get("cost_estimate_usd")),
-        "agent_id_hash": entry.get("agent_id_hash") or hash_id(entry.get("agent_id") or entry.get("run_id") or entry.get("profile")),
+        "agent_id_hash": entry.get("agent_id_hash")
+        or hash_id(entry.get("agent_id") or entry.get("run_id") or entry.get("profile")),
         "privacy_level": str(entry.get("privacy_level") or "local_only"),
         "pii_level": str(entry.get("pii_level") or "unknown"),
     }
@@ -440,13 +455,17 @@ def bucket_start(value: str, bucket: str) -> str:
     elif bucket == "day":
         parsed = parsed.replace(hour=0, minute=0, second=0, microsecond=0)
     elif bucket == "week":
-        parsed = (parsed - dt.timedelta(days=parsed.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        parsed = (parsed - dt.timedelta(days=parsed.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
     elif bucket == "month":
         parsed = parsed.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     return parsed.isoformat().replace("+00:00", "Z")
 
 
-def build_activity_series(agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]], bucket: str) -> list[dict[str, Any]]:
+def build_activity_series(
+    agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]], bucket: str
+) -> list[dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     active: dict[str, set[str]] = {}
 
@@ -524,7 +543,9 @@ def observed_days(records: list[dict[str, Any]]) -> int:
     return max(1, len(days))
 
 
-def category_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def category_summary(
+    agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for record in agent_events + cron_runs:
         category = str(record.get("category") or "uncategorized")
@@ -550,10 +571,14 @@ def category_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[st
     for row in rows.values():
         row["hours"] = round(row["duration_ms"] / 3600000, 2)
         row["cost_estimate_usd"] = round(row["cost_estimate_usd"], 4)
-    return sorted(rows.values(), key=lambda row: (-(row["agent_events"] + row["cron_runs"]), row["category"]))
+    return sorted(
+        rows.values(), key=lambda row: (-(row["agent_events"] + row["cron_runs"]), row["category"])
+    )
 
 
-def harness_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def harness_summary(
+    agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for record in agent_events + cron_runs:
         harness = str(record.get("harness") or "unknown")
@@ -592,7 +617,9 @@ def harness_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[str
     return sorted(out, key=lambda row: (-(row["agent_events"] + row["cron_runs"]), row["harness"]))
 
 
-def workflow_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def workflow_summary(
+    agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for record in agent_events + cron_runs:
         workflow = str(record.get("workflow") or "unknown")
@@ -623,7 +650,9 @@ def workflow_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[st
         total = row["agent_events"] + row["cron_runs"]
         row["success_rate"] = round(row["successes"] / total, 3) if total else None
         row["cost_estimate_usd"] = round(row["cost_estimate_usd"], 4)
-    return sorted(rows.values(), key=lambda row: (-(row["agent_events"] + row["cron_runs"]), row["workflow"]))
+    return sorted(
+        rows.values(), key=lambda row: (-(row["agent_events"] + row["cron_runs"]), row["workflow"])
+    )
 
 
 def build_cron_timeline(cron_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -644,7 +673,9 @@ def build_cron_timeline(cron_runs: list[dict[str, Any]]) -> list[dict[str, Any]]
     timeline_end = max(finish for _, _, _, finish in parsed_runs)
     span_ms = max(1, int((timeline_end - timeline_start).total_seconds() * 1000))
     rows: list[dict[str, Any]] = []
-    for lane, (idx, run, start, finish) in enumerate(sorted(parsed_runs, key=lambda item: (item[2], item[1].get("name") or ""))):
+    for lane, (idx, run, start, finish) in enumerate(
+        sorted(parsed_runs, key=lambda item: (item[2], item[1].get("name") or ""))
+    ):
         duration_ms = run.get("duration_ms")
         if duration_ms is None:
             duration_ms = max(0, int((finish - start).total_seconds() * 1000))
@@ -671,41 +702,126 @@ def build_cron_timeline(cron_runs: list[dict[str, Any]]) -> list[dict[str, Any]]
     return rows
 
 
-def build_kpi_summary(agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]], categories: list[dict[str, Any]], harnesses: list[dict[str, Any]], workflows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def build_kpi_summary(
+    agent_events: list[dict[str, Any]],
+    cron_runs: list[dict[str, Any]],
+    categories: list[dict[str, Any]],
+    harnesses: list[dict[str, Any]],
+    workflows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     all_records = agent_events + cron_runs
     total_runs = len(all_records)
-    successes = sum(1 for record in all_records if record.get("status") == "success" or record.get("result") == "success")
-    errors = sum(1 for record in all_records if record.get("status") == "error" or record.get("result") == "failure")
-    duration_values = [float(record["duration_ms"]) for record in all_records if record.get("duration_ms") is not None]
+    successes = sum(
+        1
+        for record in all_records
+        if record.get("status") == "success" or record.get("result") == "success"
+    )
+    errors = sum(
+        1
+        for record in all_records
+        if record.get("status") == "error" or record.get("result") == "failure"
+    )
+    duration_values = [
+        float(record["duration_ms"])
+        for record in all_records
+        if record.get("duration_ms") is not None
+    ]
     days = observed_days(all_records)
-    active_agents = len({record.get("agent_id_hash") for record in all_records if record.get("agent_id_hash")})
-    total_tokens = sum_field(agent_events, "tokens_total_estimate") + sum_field(cron_runs, "tokens_total_estimate")
-    total_cost = sum_field(agent_events, "cost_estimate_usd") + sum_field(cron_runs, "cost_estimate_usd")
+    active_agents = len(
+        {record.get("agent_id_hash") for record in all_records if record.get("agent_id_hash")}
+    )
+    total_tokens = sum_field(agent_events, "tokens_total_estimate") + sum_field(
+        cron_runs, "tokens_total_estimate"
+    )
+    total_cost = sum_field(agent_events, "cost_estimate_usd") + sum_field(
+        cron_runs, "cost_estimate_usd"
+    )
 
     rows = [
-        ("agent_events", len(agent_events), "events", "Non-cron agent actions observed across harnesses."),
+        (
+            "agent_events",
+            len(agent_events),
+            "events",
+            "Non-cron agent actions observed across harnesses.",
+        ),
         ("cron_runs", len(cron_runs), "runs", "Scheduled or cron-triggered agent runs."),
-        ("cron_runs_per_day", round(len(cron_runs) / days, 3), "runs/day", "Observed scheduled-agent cadence."),
-        ("events_per_day", round(len(agent_events) / days, 3), "events/day", "Observed non-cron agent activity cadence."),
-        ("active_agents", active_agents, "agents", "Distinct hashed agent/run identities observed."),
-        ("harnesses", len(harnesses), "harnesses", "Distinct harnesses such as Claude Code, Hermes, OpenClaw, Codex, or Cursor."),
+        (
+            "cron_runs_per_day",
+            round(len(cron_runs) / days, 3),
+            "runs/day",
+            "Observed scheduled-agent cadence.",
+        ),
+        (
+            "events_per_day",
+            round(len(agent_events) / days, 3),
+            "events/day",
+            "Observed non-cron agent activity cadence.",
+        ),
+        (
+            "active_agents",
+            active_agents,
+            "agents",
+            "Distinct hashed agent/run identities observed.",
+        ),
+        (
+            "harnesses",
+            len(harnesses),
+            "harnesses",
+            "Distinct harnesses such as Claude Code, Hermes, OpenClaw, Codex, or Cursor.",
+        ),
         ("workflows", len(workflows), "workflows", "Distinct workflow names observed."),
         ("categories", len(categories), "categories", "User-defined resource categories observed."),
         ("successes", successes, "runs", "Runs marked success."),
         ("errors", errors, "runs", "Runs marked error or failure."),
-        ("success_rate", round(successes / total_runs, 3) if total_runs else None, "ratio", "Successful runs divided by all observed runs."),
-        ("error_rate", round(errors / total_runs, 3) if total_runs else None, "ratio", "Errored runs divided by all observed runs."),
-        ("median_duration_ms", median(duration_values), "ms", "Median duration across runs with duration data."),
+        (
+            "success_rate",
+            round(successes / total_runs, 3) if total_runs else None,
+            "ratio",
+            "Successful runs divided by all observed runs.",
+        ),
+        (
+            "error_rate",
+            round(errors / total_runs, 3) if total_runs else None,
+            "ratio",
+            "Errored runs divided by all observed runs.",
+        ),
+        (
+            "median_duration_ms",
+            median(duration_values),
+            "ms",
+            "Median duration across runs with duration data.",
+        ),
         ("tokens_total_estimate", total_tokens, "tokens", "Estimated input plus output tokens."),
-        ("tokens_per_run_estimate", round(total_tokens / total_runs, 3) if total_runs else None, "tokens/run", "Estimated tokens divided by observed runs."),
-        ("cost_estimate_usd", round(total_cost, 4), "USD", "Estimated total model/tool cost when supplied by harnesses."),
-        ("cost_per_run_estimate_usd", round(total_cost / total_runs, 4) if total_runs else None, "USD/run", "Estimated cost divided by observed runs."),
+        (
+            "tokens_per_run_estimate",
+            round(total_tokens / total_runs, 3) if total_runs else None,
+            "tokens/run",
+            "Estimated tokens divided by observed runs.",
+        ),
+        (
+            "cost_estimate_usd",
+            round(total_cost, 4),
+            "USD",
+            "Estimated total model/tool cost when supplied by harnesses.",
+        ),
+        (
+            "cost_per_run_estimate_usd",
+            round(total_cost / total_runs, 4) if total_runs else None,
+            "USD/run",
+            "Estimated cost divided by observed runs.",
+        ),
     ]
-    return [{"kpi": kpi, "value": value, "unit": unit, "description": description} for kpi, value, unit, description in rows]
+    return [
+        {"kpi": kpi, "value": value, "unit": unit, "description": description}
+        for kpi, value, unit, description in rows
+    ]
 
 
 def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
-    path.write_text("".join(json.dumps(record, separators=(",", ":")) + "\n" for record in records), encoding="utf-8")
+    path.write_text(
+        "".join(json.dumps(record, separators=(",", ":")) + "\n" for record in records),
+        encoding="utf-8",
+    )
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -764,7 +880,17 @@ def timeline_html(rows: list[dict[str, Any]]) -> str:
     return "\n".join(out)
 
 
-def write_dashboard(path: Path, summary: dict[str, Any], activity: list[dict[str, Any]], categories: list[dict[str, Any]], harnesses: list[dict[str, Any]], workflows: list[dict[str, Any]], cron_runs: list[dict[str, Any]], cron_timeline: list[dict[str, Any]], kpis: list[dict[str, Any]]) -> None:
+def write_dashboard(
+    path: Path,
+    summary: dict[str, Any],
+    activity: list[dict[str, Any]],
+    categories: list[dict[str, Any]],
+    harnesses: list[dict[str, Any]],
+    workflows: list[dict[str, Any]],
+    cron_runs: list[dict[str, Any]],
+    cron_timeline: list[dict[str, Any]],
+    kpis: list[dict[str, Any]],
+) -> None:
     css = """
 body{margin:0;background:#f7f9fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 header{background:#fff;border-bottom:1px solid #d9e0e8;padding:28px 32px}
@@ -790,27 +916,39 @@ th{color:#657286}.scroll{overflow-x:auto}.footer{font-size:12px;color:#657286}
         ("Tokens est.", int(summary["resources"]["tokens_total_estimate"])),
         ("Cost est.", f"${summary['resources']['cost_estimate_usd']:.2f}"),
     ]
-    cards = "".join(f"<div class='metric'><b>{html.escape(str(v))}</b><span>{html.escape(k)}</span></div>" for k, v in metric_cards)
+    cards = "".join(
+        f"<div class='metric'><b>{html.escape(str(v))}</b><span>{html.escape(k)}</span></div>"
+        for k, v in metric_cards
+    )
     cron_table = table_html(
         ["Name", "Harness", "Workflow", "Category", "Start", "Finish", "Duration ms", "Status"],
         cron_runs,
-        ["name", "harness", "workflow", "category", "started_at", "finished_at", "duration_ms", "status"],
+        [
+            "name",
+            "harness",
+            "workflow",
+            "category",
+            "started_at",
+            "finished_at",
+            "duration_ms",
+            "status",
+        ],
     )
     path.write_text(
         f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>agentic-stack Data Layer Dashboard</title><style>{css}</style></head>
 <body><header><h1>agentic-stack Data Layer Dashboard</h1>
-<p>{html.escape(summary['project'])} - {html.escape(summary['window'])} - bucket: {html.escape(summary['bucket'])} - generated {html.escape(summary['generated_at'])}</p></header>
+<p>{html.escape(summary["project"])} - {html.escape(summary["window"])} - bucket: {html.escape(summary["bucket"])} - generated {html.escape(summary["generated_at"])}</p></header>
 <main>
 <section><h2>Resource Overview</h2><div class="grid">{cards}</div></section>
-<section><h2>KPI Summary</h2><div class="scroll">{table_html(['KPI','Value','Unit','Description'], kpis, ['kpi','value','unit','description'])}</div></section>
-<section><h2>Activity By {html.escape(summary['bucket'].title())}</h2>{bar_rows(activity, 'bucket_start', 'agent_events', '#0f766e')}</section>
-<section><h2>Tokens By {html.escape(summary['bucket'].title())}</h2>{bar_rows(activity, 'bucket_start', 'tokens_total_estimate', '#2563eb')}</section>
-<section><h2>Cron Runs</h2>{bar_rows(activity, 'bucket_start', 'cron_runs', '#b45309')}</section>
-<section><h2>Task Categories</h2>{bar_rows(categories, 'category', 'agent_events', '#7c3aed')}</section>
-<section><h2>Harness Mix</h2>{bar_rows(harnesses, 'harness', 'agent_events', '#0369a1')}</section>
-<section><h2>Workflow Outcomes</h2><div class="scroll">{table_html(['Workflow','Agent events','Cron runs','Successes','Errors','Success rate','Tokens','Cost'], workflows, ['workflow','agent_events','cron_runs','successes','errors','success_rate','tokens_total_estimate','cost_estimate_usd'])}</div></section>
+<section><h2>KPI Summary</h2><div class="scroll">{table_html(["KPI", "Value", "Unit", "Description"], kpis, ["kpi", "value", "unit", "description"])}</div></section>
+<section><h2>Activity By {html.escape(summary["bucket"].title())}</h2>{bar_rows(activity, "bucket_start", "agent_events", "#0f766e")}</section>
+<section><h2>Tokens By {html.escape(summary["bucket"].title())}</h2>{bar_rows(activity, "bucket_start", "tokens_total_estimate", "#2563eb")}</section>
+<section><h2>Cron Runs</h2>{bar_rows(activity, "bucket_start", "cron_runs", "#b45309")}</section>
+<section><h2>Task Categories</h2>{bar_rows(categories, "category", "agent_events", "#7c3aed")}</section>
+<section><h2>Harness Mix</h2>{bar_rows(harnesses, "harness", "agent_events", "#0369a1")}</section>
+<section><h2>Workflow Outcomes</h2><div class="scroll">{table_html(["Workflow", "Agent events", "Cron runs", "Successes", "Errors", "Success rate", "Tokens", "Cost"], workflows, ["workflow", "agent_events", "cron_runs", "successes", "errors", "success_rate", "tokens_total_estimate", "cost_estimate_usd"])}</div></section>
 <section><h2>Cron Gantt</h2><div class="scroll">{timeline_html(cron_timeline)}</div></section>
 <section><h2>Cron Timeline</h2><div class="scroll">{cron_table}</div></section>
 <p class="footer">Local-only dashboard. Review privacy and PII status before sharing screenshots.</p>
@@ -820,8 +958,21 @@ th{color:#657286}.scroll{overflow-x:auto}.footer{font-size:12px;color:#657286}
     )
 
 
-def build_summary(args: argparse.Namespace, quality: dict[str, Any], agent_events: list[dict[str, Any]], cron_runs: list[dict[str, Any]], categories: list[dict[str, Any]], harnesses: list[dict[str, Any]]) -> dict[str, Any]:
-    active_agents = len({record.get("agent_id_hash") for record in agent_events + cron_runs if record.get("agent_id_hash")})
+def build_summary(
+    args: argparse.Namespace,
+    quality: dict[str, Any],
+    agent_events: list[dict[str, Any]],
+    cron_runs: list[dict[str, Any]],
+    categories: list[dict[str, Any]],
+    harnesses: list[dict[str, Any]],
+) -> dict[str, Any]:
+    active_agents = len(
+        {
+            record.get("agent_id_hash")
+            for record in agent_events + cron_runs
+            if record.get("agent_id_hash")
+        }
+    )
     return {
         "generated_at": now_iso(),
         "project": args.project,
@@ -837,10 +988,17 @@ def build_summary(args: argparse.Namespace, quality: dict[str, Any], agent_event
             "active_agents": active_agents,
         },
         "resources": {
-            "tokens_in_estimate": sum_field(agent_events, "tokens_in_estimate") + sum_field(cron_runs, "tokens_in_estimate"),
-            "tokens_out_estimate": sum_field(agent_events, "tokens_out_estimate") + sum_field(cron_runs, "tokens_out_estimate"),
-            "tokens_total_estimate": sum_field(agent_events, "tokens_total_estimate") + sum_field(cron_runs, "tokens_total_estimate"),
-            "cost_estimate_usd": round(sum_field(agent_events, "cost_estimate_usd") + sum_field(cron_runs, "cost_estimate_usd"), 4),
+            "tokens_in_estimate": sum_field(agent_events, "tokens_in_estimate")
+            + sum_field(cron_runs, "tokens_in_estimate"),
+            "tokens_out_estimate": sum_field(agent_events, "tokens_out_estimate")
+            + sum_field(cron_runs, "tokens_out_estimate"),
+            "tokens_total_estimate": sum_field(agent_events, "tokens_total_estimate")
+            + sum_field(cron_runs, "tokens_total_estimate"),
+            "cost_estimate_usd": round(
+                sum_field(agent_events, "cost_estimate_usd")
+                + sum_field(cron_runs, "cost_estimate_usd"),
+                4,
+            ),
         },
         "top_harnesses": count_by(agent_events + cron_runs, "harness"),
         "top_skills": count_by(agent_events, "skill"),
@@ -902,16 +1060,16 @@ def write_daily_report(path: Path, summary: dict[str, Any]) -> None:
     path.write_text(
         f"""# Daily agentic-stack Resource Report
 
-Generated: {summary['generated_at']}
+Generated: {summary["generated_at"]}
 
 ## Key Numbers
 
-- Agent events: {summary['counts']['agent_events']}
-- Cron runs: {summary['counts']['cron_runs']}
-- Harnesses observed: {summary['counts']['harnesses']}
-- Active agents: {summary['counts']['active_agents']}
-- Estimated tokens: {summary['resources']['tokens_total_estimate']}
-- Estimated cost: ${summary['resources']['cost_estimate_usd']}
+- Agent events: {summary["counts"]["agent_events"]}
+- Cron runs: {summary["counts"]["cron_runs"]}
+- Harnesses observed: {summary["counts"]["harnesses"]}
+- Active agents: {summary["counts"]["active_agents"]}
+- Estimated tokens: {summary["resources"]["tokens_total_estimate"]}
+- Estimated cost: ${summary["resources"]["cost_estimate_usd"]}
 
 ## Screenshot Target
 
@@ -948,7 +1106,14 @@ def plain_bar(value: Any, max_value: float, width: int = 18) -> str:
     return "#" * filled + "-" * (width - filled)
 
 
-def top_table(rows: list[dict[str, Any]], label_field: str, value_field: str, secondary_value_field: str = "", limit: int = 5, color: bool = False) -> list[str]:
+def top_table(
+    rows: list[dict[str, Any]],
+    label_field: str,
+    value_field: str,
+    secondary_value_field: str = "",
+    limit: int = 5,
+    color: bool = False,
+) -> list[str]:
     if not rows:
         return [f"{rail(color)}  {paint('no data yet', MUTED, color)}"]
     top = rows[:limit]
@@ -996,46 +1161,58 @@ def render_terminal_dashboard(out_dir: Path, color: bool = False) -> str:
         f"{rail(color)}  generated={summary['generated_at']}",
     ]
     if summary.get("request"):
-        lines.append(f"{rail(color)}  Request ... {paint(summary['request'], f'{BOLD}{WHITE}', color)}")
-    lines.extend([
-        rail(color),
-        section_line("Resource Overview", color),
-        metric_line("Agent events", compact_value(counts["agent_events"]), color),
-        metric_line("Cron runs", compact_value(counts["cron_runs"]), color),
-        metric_line("Harnesses", compact_value(counts["harnesses"]), color),
-        metric_line("Active agents", compact_value(counts["active_agents"]), color),
-        metric_line("Tokens est.", compact_value(resources["tokens_total_estimate"]), color),
-        metric_line("Cost est.", compact_value(resources["cost_estimate_usd"], prefix="$"), color),
-        rail(color),
-        section_line("Latest Bucket", color),
-        f"{rail(color)}  {latest_activity.get('bucket_start', 'no activity')}  "
-        f"events={compact_value(latest_activity.get('agent_events'))} "
-        f"cron={compact_value(latest_activity.get('cron_runs'))} "
-        f"tokens={compact_value(latest_activity.get('tokens_total_estimate'))}",
-        rail(color),
-        section_line("Top Harnesses", color),
-        *top_table(harnesses, "harness", "agent_events", "cron_runs", color=color),
-        rail(color),
-        section_line("Top Workflows", color),
-        *top_table(workflows, "workflow", "agent_events", "cron_runs", color=color),
-        rail(color),
-        section_line("Top Categories", color),
-        *top_table(categories, "category", "agent_events", "cron_runs", color=color),
-        rail(color),
-        f"{paint('└', MUTED, color)}  Open in browser: {out_dir / 'dashboard.html'}",
-        f"{rail(color)}  Terminal copy : {out_dir / 'dashboard.tui.txt'}",
-        f"{rail(color)}  Privacy       : local-only; screenshots require explicit user approval",
-    ])
+        lines.append(
+            f"{rail(color)}  Request ... {paint(summary['request'], f'{BOLD}{WHITE}', color)}"
+        )
+    lines.extend(
+        [
+            rail(color),
+            section_line("Resource Overview", color),
+            metric_line("Agent events", compact_value(counts["agent_events"]), color),
+            metric_line("Cron runs", compact_value(counts["cron_runs"]), color),
+            metric_line("Harnesses", compact_value(counts["harnesses"]), color),
+            metric_line("Active agents", compact_value(counts["active_agents"]), color),
+            metric_line("Tokens est.", compact_value(resources["tokens_total_estimate"]), color),
+            metric_line(
+                "Cost est.", compact_value(resources["cost_estimate_usd"], prefix="$"), color
+            ),
+            rail(color),
+            section_line("Latest Bucket", color),
+            f"{rail(color)}  {latest_activity.get('bucket_start', 'no activity')}  "
+            f"events={compact_value(latest_activity.get('agent_events'))} "
+            f"cron={compact_value(latest_activity.get('cron_runs'))} "
+            f"tokens={compact_value(latest_activity.get('tokens_total_estimate'))}",
+            rail(color),
+            section_line("Top Harnesses", color),
+            *top_table(harnesses, "harness", "agent_events", "cron_runs", color=color),
+            rail(color),
+            section_line("Top Workflows", color),
+            *top_table(workflows, "workflow", "agent_events", "cron_runs", color=color),
+            rail(color),
+            section_line("Top Categories", color),
+            *top_table(categories, "category", "agent_events", "cron_runs", color=color),
+            rail(color),
+            f"{paint('└', MUTED, color)}  Open in browser: {out_dir / 'dashboard.html'}",
+            f"{rail(color)}  Terminal copy : {out_dir / 'dashboard.tui.txt'}",
+            f"{rail(color)}  Privacy       : local-only; screenshots require explicit user approval",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
 def export(args: argparse.Namespace) -> Path:
     agent_root = Path(args.agent_root).resolve()
     data_dir = agent_root / "data-layer"
-    episodic_path = Path(args.episodic) if args.episodic else agent_root / "memory" / "episodic" / "AGENT_LEARNINGS.jsonl"
+    episodic_path = (
+        Path(args.episodic)
+        if args.episodic
+        else agent_root / "memory" / "episodic" / "AGENT_LEARNINGS.jsonl"
+    )
     extra_events_path = Path(args.events) if args.events else data_dir / "harness-events.jsonl"
     cron_path = Path(args.cron_runs) if args.cron_runs else data_dir / "cron-runs.jsonl"
-    category_path = Path(args.category_rules) if args.category_rules else data_dir / "category-rules.json"
+    category_path = (
+        Path(args.category_rules) if args.category_rules else data_dir / "category-rules.json"
+    )
     out_dir = Path(args.out) if args.out else data_dir / "exports" / args.date
 
     cutoff = cutoff_for(args.window)
@@ -1046,8 +1223,14 @@ def export(args: argparse.Namespace) -> Path:
     cron_raw, cron_quality = read_jsonl(cron_path)
 
     raw_agent = [r for r in episodic + extras if inside_window(r, cutoff)]
-    agent_events = [normalize_agent_event(r, i, args, category_rules) for i, r in enumerate(raw_agent)]
-    cron_runs = [normalize_cron_run(r, i, args, category_rules) for i, r in enumerate(cron_raw) if inside_window(r, cutoff)]
+    agent_events = [
+        normalize_agent_event(r, i, args, category_rules) for i, r in enumerate(raw_agent)
+    ]
+    cron_runs = [
+        normalize_cron_run(r, i, args, category_rules)
+        for i, r in enumerate(cron_raw)
+        if inside_window(r, cutoff)
+    ]
     activity = build_activity_series(agent_events, cron_runs, args.bucket)
     categories = category_summary(agent_events, cron_runs)
     harnesses = harness_summary(agent_events, cron_runs)
@@ -1066,55 +1249,170 @@ def export(args: argparse.Namespace) -> Path:
 
     out_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(out_dir / "agent-events.jsonl", agent_events)
-    write_csv(out_dir / "agent-events.csv", agent_events, [
-        "id", "created_at", "started_at", "finished_at", "project", "harness", "skill", "action",
-        "workflow", "phase", "run_type", "category", "result", "status", "duration_ms",
-        "tokens_in_estimate", "tokens_out_estimate", "tokens_total_estimate", "cost_estimate_usd",
-        "agent_id_hash", "profile_hash", "run_id_hash", "privacy_level", "pii_level",
-    ])
+    write_csv(
+        out_dir / "agent-events.csv",
+        agent_events,
+        [
+            "id",
+            "created_at",
+            "started_at",
+            "finished_at",
+            "project",
+            "harness",
+            "skill",
+            "action",
+            "workflow",
+            "phase",
+            "run_type",
+            "category",
+            "result",
+            "status",
+            "duration_ms",
+            "tokens_in_estimate",
+            "tokens_out_estimate",
+            "tokens_total_estimate",
+            "cost_estimate_usd",
+            "agent_id_hash",
+            "profile_hash",
+            "run_id_hash",
+            "privacy_level",
+            "pii_level",
+        ],
+    )
     write_jsonl(out_dir / "cron-runs.jsonl", cron_runs)
-    write_csv(out_dir / "cron-runs.csv", cron_runs, [
-        "id", "created_at", "started_at", "finished_at", "project", "harness", "schedule", "name",
-        "workflow", "phase", "run_type", "category", "status", "duration_ms", "tokens_in_estimate",
-        "tokens_out_estimate", "tokens_total_estimate", "cost_estimate_usd", "agent_id_hash",
-        "privacy_level", "pii_level",
-    ])
+    write_csv(
+        out_dir / "cron-runs.csv",
+        cron_runs,
+        [
+            "id",
+            "created_at",
+            "started_at",
+            "finished_at",
+            "project",
+            "harness",
+            "schedule",
+            "name",
+            "workflow",
+            "phase",
+            "run_type",
+            "category",
+            "status",
+            "duration_ms",
+            "tokens_in_estimate",
+            "tokens_out_estimate",
+            "tokens_total_estimate",
+            "cost_estimate_usd",
+            "agent_id_hash",
+            "privacy_level",
+            "pii_level",
+        ],
+    )
     write_json(out_dir / "cron-timeline.json", cron_timeline)
-    write_csv(out_dir / "cron-timeline.csv", cron_timeline, [
-        "id", "lane", "name", "harness", "workflow", "category", "started_at", "finished_at",
-        "duration_ms", "status", "timeline_start", "timeline_end", "start_offset_pct", "width_pct",
-    ])
+    write_csv(
+        out_dir / "cron-timeline.csv",
+        cron_timeline,
+        [
+            "id",
+            "lane",
+            "name",
+            "harness",
+            "workflow",
+            "category",
+            "started_at",
+            "finished_at",
+            "duration_ms",
+            "status",
+            "timeline_start",
+            "timeline_end",
+            "start_offset_pct",
+            "width_pct",
+        ],
+    )
     write_json(out_dir / "activity-series.json", activity)
-    write_csv(out_dir / "activity-series.csv", activity, [
-        "bucket_start", "agent_events", "cron_runs", "tokens_in_estimate", "tokens_out_estimate",
-        "tokens_total_estimate", "cost_estimate_usd", "active_agents",
-    ])
+    write_csv(
+        out_dir / "activity-series.csv",
+        activity,
+        [
+            "bucket_start",
+            "agent_events",
+            "cron_runs",
+            "tokens_in_estimate",
+            "tokens_out_estimate",
+            "tokens_total_estimate",
+            "cost_estimate_usd",
+            "active_agents",
+        ],
+    )
     write_json(out_dir / "category-summary.json", categories)
-    write_csv(out_dir / "category-summary.csv", categories, [
-        "category", "agent_events", "cron_runs", "duration_ms", "hours", "tokens_total_estimate", "cost_estimate_usd",
-    ])
+    write_csv(
+        out_dir / "category-summary.csv",
+        categories,
+        [
+            "category",
+            "agent_events",
+            "cron_runs",
+            "duration_ms",
+            "hours",
+            "tokens_total_estimate",
+            "cost_estimate_usd",
+        ],
+    )
     write_json(out_dir / "harness-summary.json", harnesses)
-    write_csv(out_dir / "harness-summary.csv", harnesses, [
-        "harness", "agent_events", "cron_runs", "successes", "errors", "tokens_total_estimate",
-        "cost_estimate_usd", "active_agents",
-    ])
+    write_csv(
+        out_dir / "harness-summary.csv",
+        harnesses,
+        [
+            "harness",
+            "agent_events",
+            "cron_runs",
+            "successes",
+            "errors",
+            "tokens_total_estimate",
+            "cost_estimate_usd",
+            "active_agents",
+        ],
+    )
     write_json(out_dir / "workflow-summary.json", workflows)
-    write_csv(out_dir / "workflow-summary.csv", workflows, [
-        "workflow", "agent_events", "cron_runs", "successes", "errors", "success_rate",
-        "tokens_total_estimate", "cost_estimate_usd",
-    ])
+    write_csv(
+        out_dir / "workflow-summary.csv",
+        workflows,
+        [
+            "workflow",
+            "agent_events",
+            "cron_runs",
+            "successes",
+            "errors",
+            "success_rate",
+            "tokens_total_estimate",
+            "cost_estimate_usd",
+        ],
+    )
     write_json(out_dir / "kpi-summary.json", kpis)
     write_csv(out_dir / "kpi-summary.csv", kpis, ["kpi", "value", "unit", "description"])
     write_json(out_dir / "dashboard-summary.json", summary)
     write_json(out_dir / "dashboard-report.json", dashboard_report)
-    write_dashboard(out_dir / "dashboard.html", summary, activity, categories, harnesses, workflows, cron_runs, cron_timeline, kpis)
+    write_dashboard(
+        out_dir / "dashboard.html",
+        summary,
+        activity,
+        categories,
+        harnesses,
+        workflows,
+        cron_runs,
+        cron_timeline,
+        kpis,
+    )
     write_daily_report(out_dir / "daily-report.md", summary)
-    (out_dir / "dashboard.tui.txt").write_text(render_terminal_dashboard(out_dir, color=False), encoding="utf-8")
+    (out_dir / "dashboard.tui.txt").write_text(
+        render_terminal_dashboard(out_dir, color=False), encoding="utf-8"
+    )
     return out_dir
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Export local agentic-stack activity into dashboard-ready data.")
+    parser = argparse.ArgumentParser(
+        description="Export local agentic-stack activity into dashboard-ready data."
+    )
     parser.add_argument("--agent-root", default=".agent")
     parser.add_argument("--episodic", default="")
     parser.add_argument("--events", default="", help="Optional extra cross-harness event JSONL.")
@@ -1126,7 +1424,11 @@ def main() -> int:
     parser.add_argument("--timezone", default=os.environ.get("TZ", "UTC"))
     parser.add_argument("--window", choices=sorted(VALID_WINDOWS), default="30d")
     parser.add_argument("--bucket", choices=sorted(VALID_BUCKETS), default="day")
-    parser.add_argument("request", nargs="*", help="Optional natural language request, for example: show me last 7 days by hour")
+    parser.add_argument(
+        "request",
+        nargs="*",
+        help="Optional natural language request, for example: show me last 7 days by hour",
+    )
     args = parser.parse_args()
     apply_natural_language_request(args, sys.argv[1:])
     out_dir = export(args)

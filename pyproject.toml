@@ -15,6 +15,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.0",
     "pytest>=9.1.1",
     "ruff>=0.15.20",
     "ty>=0.0.56",
@@ -26,6 +27,7 @@ pythonpath = ["."]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+exclude = [".agent", "examples", "PageIndex"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

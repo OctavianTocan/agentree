@@ -21,6 +21,7 @@ Output modes:
   --json                 machine-readable
   --quiet                no logging (useful for scripting / tests)
 """
+
 import argparse, json, os, re, sys
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -112,13 +113,15 @@ def _load_markdown_fallback():
         if claim.startswith("~~") and claim.endswith("~~"):
             continue
         if claim:
-            out.append({
-                "id": None,
-                "claim": claim,
-                "conditions": [],
-                "status": "accepted",
-                "_source": "LESSONS.md",
-            })
+            out.append(
+                {
+                    "id": None,
+                    "claim": claim,
+                    "conditions": [],
+                    "status": "accepted",
+                    "_source": "LESSONS.md",
+                }
+            )
     return out
 
 
@@ -160,6 +163,7 @@ def _merge_sources():
     suppressed (structured entries win — they have metadata).
     """
     import re as _re
+
     structured = _load_structured()
     md_only = _load_markdown_fallback()
 
@@ -216,6 +220,7 @@ def log_recall(intent, result, meta):
     try:
         sys.path.insert(0, os.path.join(BASE, "tools"))
         from memory_reflect import reflect  # noqa: E402
+
         detail = {
             "returned": [r["claim"][:80] for r in result],
             "considered": meta["considered"],
@@ -240,9 +245,7 @@ def format_pretty(intent, result, meta):
     lines.append(f"  ({meta['considered']} accepted lessons available in corpus)")
     returned = meta.get("source_counts", {})
     if returned:
-        returned_summary = ", ".join(
-            f"{src}:{n}" for src, n in sorted(returned.items())
-        )
+        returned_summary = ", ".join(f"{src}:{n}" for src, n in sorted(returned.items()))
         lines.append(f"  → returned {meta['returned']}: {returned_summary}")
     if not result:
         lines.append("  → no relevant lessons. Proceeding without prior guidance.")
@@ -251,9 +254,7 @@ def format_pretty(intent, result, meta):
     for i, r in enumerate(result, 1):
         src = r.get("source", "unknown")
         score = r.get("lexical_overlap", r.get("relevance", 0))
-        lines.append(
-            f"  [{i}] lexical_overlap={score}  {r['claim']}  [{src}]"
-        )
+        lines.append(f"  [{i}] lexical_overlap={score}  {r['claim']}  [{src}]")
         if r["conditions"]:
             lines.append(f"      conditions: {', '.join(r['conditions'])}")
     return "\n".join(lines)
