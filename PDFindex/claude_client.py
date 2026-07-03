@@ -4,14 +4,14 @@ import dataclasses
 import logging
 from typing import Any, Literal, TypedDict, TypeVar
 
-from pydantic import BaseModel
 from claude_agent_sdk import (
-    query,
-    ClaudeAgentOptions,
     AssistantMessage,
+    ClaudeAgentOptions,
     TextBlock,
     ToolUseBlock,
+    query,
 )
+from pydantic import BaseModel
 
 from PDFindex.settings import settings
 
@@ -68,7 +68,9 @@ building a `ClaudeAgentOptions` from scratch.
 
 
 def strip_json_fence(response: str) -> str:
-    """Remove a ```json ... ``` (or bare ``` ... ```) fence wrapped around a model response, if present."""
+    """Remove a ```json ... ``` (or bare ``` ... ```) fence wrapped around a model
+    response, if present.
+    """
     text = response.strip()
     if text.startswith("```"):
         _, _, text = text.partition("\n")

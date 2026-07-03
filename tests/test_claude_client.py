@@ -40,9 +40,7 @@ def test_generate_structured_completion_validates_against_schema():
         DEFAULT_OPTIONS, system_prompt="You are a test fixture. Follow instructions exactly."
     )
     result = asyncio.run(
-        generate_structured_completion(
-            "Reply with the JSON word 'hello'.", options, _Greeting
-        )
+        generate_structured_completion("Reply with the JSON word 'hello'.", options, _Greeting)
     )
 
     assert result.word.strip().lower() == "hello"

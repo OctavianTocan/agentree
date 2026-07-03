@@ -33,8 +33,10 @@ def test_consecutive_chunks_share_overlap_content():
     chunks = chunk_pages_with_overlap(pages, overlap_page=1)
 
     assert len(chunks) > 1
-    for previous_chunk, next_chunk in zip(chunks, chunks[1:]):
-        shared = [page for page in pages if page.content in previous_chunk and page.content in next_chunk]
+    for previous_chunk, next_chunk in zip(chunks, chunks[1:], strict=False):
+        shared = [
+            page for page in pages if page.content in previous_chunk and page.content in next_chunk
+        ]
         assert shared, "consecutive chunks should share at least one overlapping page"
 
 

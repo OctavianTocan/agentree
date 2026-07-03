@@ -7,12 +7,8 @@ class Node(BaseModel):
     """One section of a document; may nest child sections."""
 
     title: str = Field(description="Section heading text.")
-    start_index: int = Field(
-        description="First physical PDF page (1-indexed) this section spans."
-    )
-    end_index: int = Field(
-        description="Last physical PDF page (1-indexed) this section spans."
-    )
+    start_index: int = Field(description="First physical PDF page (1-indexed) this section spans.")
+    end_index: int = Field(description="Last physical PDF page (1-indexed) this section spans.")
     node_id: str | None = Field(
         default=None, description="Zero-padded unique id within the tree, e.g. '0007'."
     )
@@ -36,9 +32,7 @@ class Tree(BaseModel):
         default=None,
         description="LLM-generated one-line description distinguishing this document from others.",
     )
-    structure: list[Node] = Field(
-        description="Root-level sections of the document's tree."
-    )
+    structure: list[Node] = Field(description="Root-level sections of the document's tree.")
 
 
 class Page(BaseModel):
@@ -57,7 +51,10 @@ class TreeStructure(BaseModel):
     title: str = Field(description="The title of the section.")
     physical_index: str | None = Field(
         default=None,
-        description="The physical index of the start of the section, or null if it doesn't start in the given text.",
+        description=(
+            "The physical index of the start of the section, or null if it "
+            "doesn't start in the given text."
+        ),
     )
 
 

@@ -65,7 +65,7 @@ def extract_text_and_tokens(pdf_path: str) -> list[tuple[str, int]]:
     for page_num in range(number_of_pages):
         page = reader.pages[page_num]
         page_text = page.extract_text()
-        # Approximating the token length by dividing the page text length by 4, which is a rough estimate of the number of tokens in the page text.
+        # Approximate: ~4 characters per token.
         token_length = count_tokens(page_text)
         # Add the page text and token length to the page list.
         page_list.append((page_text, token_length))
@@ -96,8 +96,12 @@ def process(page_list: list[tuple[str, int]], start_index: int = 1) -> list[str]
     """
     pages: list[Page] = []
     for page_index in range(start_index, start_index + len(page_list)):
-        # Add the physical index to the page text. This is used to identify the page in the document.
-        page_text = f"<physical_index_{page_index}>\n{page_list[page_index-start_index][0]}\n<physical_index_{page_index}>\n\n"
+        # Tag the page text with its physical index.
+        page_text = (
+            f"<physical_index_{page_index}>\n"
+            f"{page_list[page_index - start_index][0]}\n"
+            f"<physical_index_{page_index}>\n\n"
+        )
 
         # Count the tokens in the page text.
         token_count = count_tokens(page_text)
@@ -141,7 +145,7 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[s
     even_split_tokens_per_chunk = math.ceil(total_token_count / expected_chunks_num)
     logger.debug(f"even_split_tokens_per_chunk: {even_split_tokens_per_chunk}")
 
-    # This is the average number of tokens per page. This is used to estimate the number of tokens to overlap between chunks.
+    # Used to estimate how many tokens the overlap adds.
     avg_tokens_per_page = total_token_count / len(pages)
     logger.debug(f"avg_tokens_per_page: {avg_tokens_per_page}")
     # This is the estimated number of tokens to overlap between chunks.
@@ -149,9 +153,7 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[s
     logger.debug(f"overlap_tokens_estimate: {overlap_tokens_estimate}")
 
     # This is the target number of tokens for each chunk.
-    chunk_target = min(
-        even_split_tokens_per_chunk + overlap_tokens_estimate, MAX_TOKENS_PER_CHUNK
-    )
+    chunk_target = min(even_split_tokens_per_chunk + overlap_tokens_estimate, MAX_TOKENS_PER_CHUNK)
     logger.debug(f"chunk_target: {chunk_target}")
 
     # Initialize the list of chunks and the current chunk's pages.
