@@ -1,18 +1,14 @@
 import pytest
 from pydantic import ValidationError
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import SettingsConfigDict
 
-from PDFindex.settings import ClaudeModelAlias
+from PDFindex.settings import Settings
 
 
-class _SettingsForTests(BaseSettings):
+class _SettingsForTests(Settings):
     """Settings variant for tests that doesn't load from .env files."""
 
-    model_config = SettingsConfigDict(env_prefix="PDFINDEX_")
-
-    model: ClaudeModelAlias = "haiku"
-    max_tokens_per_chunk: int = 20000
-    claude_code_oauth_token: str | None = None
+    model_config = SettingsConfigDict(env_file=None)
 
 
 def test_defaults_when_unset(monkeypatch):
