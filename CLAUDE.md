@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # Project Instructions (Claude Code)
 
 This project uses the **agentic-stack** portable brain. All memory, skills,

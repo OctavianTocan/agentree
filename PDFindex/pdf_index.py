@@ -33,6 +33,9 @@ def index(pdf_path: str) -> list[TreeStructure]:
     logger.info({"total_page_number": len(page_list)})
     logger.info({"total_token": sum([page[1] for page in page_list])})
 
+    ### TOC EXTRACTION ###
+    ### We need to extract the table of contents from the document, ###
+    ### and then use it to index the document. ###
     chunk_texts: list[str] = process(page_list)
     structure = asyncio.run(generate_toc_initial_structure(chunk_texts[0]))
     logger.info(f"initial_structure: {structure}")
