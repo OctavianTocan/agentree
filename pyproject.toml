@@ -9,7 +9,6 @@ dependencies = [
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
     "pypdf>=6.14.2",
-    "python-dotenv>=1.2.2",
     "typer>=0.26.8",
 ]
 

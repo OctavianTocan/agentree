@@ -10,5 +10,8 @@ lint:
 typecheck:
   uv run ty check PDFindex main.py tests
 
-check: fmt lint typecheck
+check:
+  uv run ruff format --check PDFindex main.py tests
+  uv run ruff check PDFindex main.py tests
+  uv run ty check PDFindex main.py tests
   uv run pytest -q

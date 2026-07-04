@@ -17,7 +17,6 @@ repos:
       - id: end-of-file-fixer
         files: ^(PDFindex/|main\.py$|tests/)
       - id: check-added-large-files
-        files: ^(PDFindex/|main\.py$|tests/)
 
   - repo: local
     hooks:
