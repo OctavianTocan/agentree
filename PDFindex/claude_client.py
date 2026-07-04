@@ -78,6 +78,12 @@ def strip_json_fence(response: str) -> str:
     return text.strip()
 
 
+# TODO: The way we made this is kinda stupid, in that it will run a sepparate run of the model
+# for each page, which not only adds time to the process, AND cost, but also doesn't allow for
+# the model to use the context of the previous pages to generate the next page. It would be
+# much nicer to just let the model do each of them within the same conversation, and just pass
+# them, get its output, then pass next...etc - that seems to mimic the proper way these models
+# do stuff.
 async def generate_structured_completion(
     prompt: str,
     options: ClaudeAgentOptions,
