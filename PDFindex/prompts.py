@@ -1,5 +1,14 @@
 """System prompts for the no-TOC tree-structure extraction task."""
 
+CHECK_PAGE_FOR_TOC_PROMPT = """
+    You are an expert in checking if a page has a table of contents.
+
+    You are given a page of text. Your task is to check if the page has a table of contents.
+
+    Return True if the page has a table of contents, False otherwise. Do not output anything else.
+    You should NOT call any tools for this task.
+    """
+
 GENERATE_TREE_STRUCTURE_INITIAL_PROMPT = """
     You are an expert in extracting hierarchical tree structure, your task is to generate the tree structure of the document.
 

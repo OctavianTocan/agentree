@@ -5,11 +5,11 @@ import logging
 from typing import Any, Literal, TypedDict, TypeVar
 
 from claude_agent_sdk import (
-    AssistantMessage,
-    ClaudeAgentOptions,
-    TextBlock,
-    ToolUseBlock,
-    query,
+  AssistantMessage,
+  ClaudeAgentOptions,
+  TextBlock,
+  ToolUseBlock,
+  query,
 )
 from pydantic import BaseModel
 
@@ -18,46 +18,46 @@ from PDFindex.settings import settings
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
+ResponseModel = TypeVar('ResponseModel', bound=BaseModel)
 
 
 class JsonSchemaOutputFormat(TypedDict):
-    """The `output_format` shape the CLI expects in order to enforce structured output.
+  """The `output_format` shape the CLI expects in order to enforce structured output.
 
-    The SDK types `output_format` as a bare `dict[str, Any]`, so nothing catches a
-    wrong key here at the SDK layer - that's exactly the shape of bug this type exists
-    to prevent on our side (`schema`, not `json_schema`).
-    """
+  The SDK types `output_format` as a bare `dict[str, Any]`, so nothing catches a
+  wrong key here at the SDK layer - that's exactly the shape of bug this type exists
+  to prevent on our side (`schema`, not `json_schema`).
+  """
 
-    type: Literal["json_schema"]
-    schema: dict[str, Any]
+  type: Literal['json_schema']
+  schema: dict[str, Any]
 
 
 DISALLOWED_TOOLS: list[str] = [
-    "ToolSearch",
-    "Bash",
-    "Read",
-    "Write",
-    "Edit",
-    "Glob",
-    "Grep",
-    "WebFetch",
-    "WebSearch",
-    "NotebookEdit",
-    "TodoWrite",
-    "Task",
-    "BashOutput",
-    "KillShell",
-    "ExitPlanMode",
-    "Skill",
+  'ToolSearch',
+  'Bash',
+  'Read',
+  'Write',
+  'Edit',
+  'Glob',
+  'Grep',
+  'WebFetch',
+  'WebSearch',
+  'NotebookEdit',
+  'TodoWrite',
+  'Task',
+  'BashOutput',
+  'KillShell',
+  'ExitPlanMode',
+  'Skill',
 ]
 
 DEFAULT_OPTIONS = ClaudeAgentOptions(
-    model=settings.model,
-    max_turns=1,
-    thinking={"type": "disabled"},
-    setting_sources=[],
-    disallowed_tools=DISALLOWED_TOOLS,
+  model=settings.model,
+  max_turns=1,
+  thinking={'type': 'disabled'},
+  setting_sources=[],
+  disallowed_tools=DISALLOWED_TOOLS,
 )
 """Baseline options for a single-turn, no-tool-loop structured completion.
 
@@ -68,74 +68,71 @@ building a `ClaudeAgentOptions` from scratch.
 
 
 def strip_json_fence(response: str) -> str:
-    """Remove a ```json ... ``` (or bare ``` ... ```) fence wrapped around a model
-    response, if present.
-    """
-    text = response.strip()
-    if text.startswith("```"):
-        _, _, text = text.partition("\n")
-        text = text.removesuffix("```")
-    return text.strip()
+  """Remove a markdown JSON fence.
+
+  Removes a ```json ... ``` (or bare ``` ... ```) fence wrapped around a model
+  response, if present.
+  """
+  text = response.strip()
+  if text.startswith('```'):
+    _, _, text = text.partition('\n')
+    text = text.removesuffix('```')
+  return text.strip()
 
 
-# TODO: The way we made this is kinda stupid, in that it will run a sepparate run of the model
-# for each page, which not only adds time to the process, AND cost, but also doesn't allow for
-# the model to use the context of the previous pages to generate the next page. It would be
-# much nicer to just let the model do each of them within the same conversation, and just pass
-# them, get its output, then pass next...etc - that seems to mimic the proper way these models
-# do stuff.
 async def generate_structured_completion(
-    prompt: str,
-    options: ClaudeAgentOptions,
-    response_model: type[ResponseModel],
+  prompt: str,
+  options: ClaudeAgentOptions,
+  response_model: type[ResponseModel],
 ) -> ResponseModel:
-    """Run one non-interactive Claude Agent SDK query and validate its reply against a schema.
+  """Run one non-interactive Claude Agent SDK query and validate its reply against a schema.
 
-    Args:
-        prompt: The user-turn text sent to the model.
-        options: SDK options for the query. Its `output_format` is overridden to
-            enforce `response_model`'s schema, regardless of what's set here.
-        response_model: Pydantic model the reply's JSON must validate against.
+  Args:
+      prompt: The user-turn text sent to the model.
+      options: SDK options for the query. Its `output_format` is overridden to
+          enforce `response_model`'s schema, regardless of what's set here.
+      response_model: Pydantic model the reply's JSON must validate against.
 
-    Returns:
-        An instance of `response_model` parsed from the model's reply.
-    """
-    output_format: JsonSchemaOutputFormat = {
-        "type": "json_schema",
-        "schema": response_model.model_json_schema(),
-    }
-    options = dataclasses.replace(options, output_format=output_format)
+  Returns:
+      An instance of `response_model` parsed from the model's reply.
 
-    response_text = ""
-    structured_output: dict[str, Any] | None = None
+  """
+  output_format: JsonSchemaOutputFormat = {
+    'type': 'json_schema',
+    'schema': response_model.model_json_schema(),
+  }
+  options = dataclasses.replace(options, output_format=output_format)
 
-    try:
-        async for message in query(prompt=prompt, options=options):
-            if isinstance(message, AssistantMessage):
-                for block in message.content:
-                    logger.debug({"Claude block:": block})
-                    if isinstance(block, TextBlock):
-                        logger.debug({"Claude block text:": block.text})
-                        response_text += block.text
-                    # The CLI enforces output_format's schema by having the model
-                    # call a synthetic "StructuredOutput" tool instead of replying
-                    # in prose; its already-parsed input is the real payload.
-                    elif isinstance(block, ToolUseBlock) and block.name == "StructuredOutput":
-                        structured_output = block.input
-    except Exception as e:
-        # max_turns=1 can trip after the model already delivered a usable reply
-        # (e.g. it tries a follow-up tool call and hits the turn cap doing so) -
-        # don't discard a perfectly good reply just because the CLI also
-        # reported an error once the turn limit closed the conversation.
-        if not response_text and structured_output is None:
-            logger.error({"Claude error:": str(e)})
-            raise e
-        logger.debug({"Claude error (ignored, reply already captured):": str(e)})
+  response_text = ''
+  structured_output: dict[str, Any] | None = None
 
-    try:
-        if structured_output is not None:
-            return response_model.model_validate(structured_output)
-        return response_model.model_validate_json(strip_json_fence(response_text))
-    except Exception as e:
-        logger.error({"Validation error:": str(e)})
-        raise e
+  try:
+    async for message in query(prompt=prompt, options=options):
+      if isinstance(message, AssistantMessage):
+        for block in message.content:
+          logger.debug({'Claude block:': block})
+          if isinstance(block, TextBlock):
+            logger.debug({'Claude block text:': block.text})
+            response_text += block.text
+          # The CLI enforces output_format's schema by having the model
+          # call a synthetic "StructuredOutput" tool instead of replying
+          # in prose; its already-parsed input is the real payload.
+          elif isinstance(block, ToolUseBlock) and block.name == 'StructuredOutput':
+            structured_output = block.input
+  except Exception as e:
+    # max_turns=1 can trip after the model already delivered a usable reply
+    # (e.g. it tries a follow-up tool call and hits the turn cap doing so) -
+    # don't discard a perfectly good reply just because the CLI also
+    # reported an error once the turn limit closed the conversation.
+    if not response_text and structured_output is None:
+      logger.error({'Claude error:': str(e)})
+      raise e
+    logger.debug({'Claude error (ignored, reply already captured):': str(e)})
+
+  try:
+    if structured_output is not None:
+      return response_model.model_validate(structured_output)
+    return response_model.model_validate_json(strip_json_fence(response_text))
+  except Exception as e:
+    logger.error({'Validation error:': str(e)})
+    raise e

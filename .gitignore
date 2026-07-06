@@ -4,3 +4,4 @@ example/
 __pycache__/
 .env
 pdf_index.log
+.omo/
