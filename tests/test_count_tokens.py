@@ -1,4 +1,4 @@
-from PDFindex.pdf_index import count_tokens
+from PDFindex.indexing.pdf_index import count_tokens
 
 
 def test_counts_roughly_four_characters_per_token():

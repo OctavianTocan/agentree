@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from pydantic_settings import SettingsConfigDict
 
-from PDFindex.settings import Settings
+from PDFindex.config.settings import Settings
 
 
 class _SettingsForTests(Settings):
@@ -12,19 +12,21 @@ class _SettingsForTests(Settings):
 
 
 def test_defaults_when_unset(monkeypatch):
-  monkeypatch.delenv('PDFINDEX_MODEL', raising=False)
+  monkeypatch.delenv('PDFINDEX_COMPLETION_CLIENT', raising=False)
+  monkeypatch.delenv('PDFINDEX_CLAUDE_MODEL', raising=False)
   monkeypatch.delenv('PDFINDEX_MAX_TOKENS_PER_CHUNK', raising=False)
   monkeypatch.delenv('PDFINDEX_CLAUDE_CODE_OAUTH_TOKEN', raising=False)
 
   settings = _SettingsForTests()
 
-  assert settings.model == 'haiku'
+  assert settings.completion_client == 'claude'
+  assert settings.claude_model == 'haiku'
   assert settings.max_tokens_per_chunk == 20000
   assert settings.claude_code_oauth_token is None
 
 
-def test_rejects_invalid_model_alias(monkeypatch):
-  monkeypatch.setenv('PDFINDEX_MODEL', 'not-a-real-model')
+def test_rejects_invalid_claude_model_alias(monkeypatch):
+  monkeypatch.setenv('PDFINDEX_CLAUDE_MODEL', 'not-a-real-model')
 
   with pytest.raises(ValidationError):
     _SettingsForTests()

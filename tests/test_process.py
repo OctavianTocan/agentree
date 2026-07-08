@@ -1,4 +1,4 @@
-from PDFindex.pdf_index import process
+from PDFindex.indexing.pdf_index import process
 
 
 def test_tags_each_page_with_its_physical_index():

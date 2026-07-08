@@ -1,12 +1,15 @@
 """Typed application configuration, read from the environment (and `.env`)."""
 
 import os
-from typing import Literal
 
+from openai_codex.generated.v2_all import Personality, ReasoningEffort
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ClaudeModelAlias = Literal['haiku', 'sonnet', 'opus', 'fable']
-"""Model aliases accepted by the Claude Agent SDK's `model` option."""
+from PDFindex.types.aliases import (
+  ClaudeModelAlias,
+  CodexModelAlias,
+  CompletionClientAlias,
+)
 
 
 class Settings(BaseSettings):
@@ -15,13 +18,28 @@ class Settings(BaseSettings):
   # The configuration is loaded from the environment variables.
   model_config = SettingsConfigDict(env_prefix='PDFINDEX_', env_file='.env')
 
-  # The model to use for the table of contents extraction.
-  model: ClaudeModelAlias = 'haiku'
+  # The completion client to use: claude or codex.
+  completion_client: CompletionClientAlias = 'claude'
+
+  # The model to use for the Claude Agent SDK. Defaults to haiku.
+  claude_model: ClaudeModelAlias = 'haiku'
+
+  # The model to use for the Codex SDK.
+  codex_model: CodexModelAlias = 'gpt-5.5'
+
+  # The reasoning effort to use for the Codex client.
+  codex_reasoning_effort: ReasoningEffort = ReasoningEffort.medium
+
+  # The personality to use for the Codex client.
+  personality: Personality = Personality.pragmatic
+
   # The maximum number of tokens per chunk.
   max_tokens_per_chunk: int = 20000
-  # The number of pages to check for a table of contents.
+
+  # OAuth token from `claude setup-token`.
   claude_code_oauth_token: str | None = None
-  # The number of pages to check for a table of contents.
+
+  # How many leading pages to scan for an embedded table of contents.
   top_check_page_num: int = 20
 
 

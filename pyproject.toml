@@ -51,8 +51,9 @@ ignore = [
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"PDFindex/prompts.py" = ["E501"]
-"PDFindex/storage.py" = ["S608"]
+"PDFindex/**" = ["N999"]
+"PDFindex/indexing/prompts.py" = ["E501"]
+"PDFindex/storage/sqlite.py" = ["S608"]
 "main.py" = ["D100"]
 "tests/**/*.py" = ["S101", "D100", "D101", "D102", "D103", "D104", "PT011", "RUF007"]
 

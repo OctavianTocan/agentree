@@ -1,5 +1,5 @@
+from PDFindex.indexing.pdf_index import MAX_TOKENS_PER_CHUNK, chunk_pages_with_overlap
 from PDFindex.models import Page
-from PDFindex.pdf_index import MAX_TOKENS_PER_CHUNK, chunk_pages_with_overlap
 
 
 def make_page(label: str, tokens: int) -> Page:

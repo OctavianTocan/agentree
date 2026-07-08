@@ -6,13 +6,13 @@ import math
 
 from pypdf import PdfReader
 
-from PDFindex.models import Page, PageChunk, TreeStructure
-from PDFindex.settings import settings
-from PDFindex.toc_extraction import (
+from PDFindex.config import settings
+from PDFindex.indexing.toc_extraction import (
   check_page_for_toc,
   generate_toc_continuation_structure,
   generate_toc_initial_structure,
 )
+from PDFindex.models import Page, PageChunk, TreeStructure
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

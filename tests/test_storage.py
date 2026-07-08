@@ -5,6 +5,7 @@ import pytest
 
 from PDFindex import storage
 from PDFindex.models import Node, Page, Tree
+from PDFindex.storage import sqlite as storage_backend
 
 
 def _make_tree() -> Tree:
@@ -111,7 +112,7 @@ class _FakeConnWithoutFts5:
 
 
 def test_init_db_fails_loud_without_fts5(tmp_path, monkeypatch):
-  monkeypatch.setattr(storage.sqlite3, 'connect', lambda _path: _FakeConnWithoutFts5())
+  monkeypatch.setattr(storage_backend.sqlite3, 'connect', lambda _path: _FakeConnWithoutFts5())
 
   with pytest.raises(RuntimeError, match='FTS5'):
     storage.init_db(tmp_path / 'index.db')

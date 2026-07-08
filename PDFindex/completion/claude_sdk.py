@@ -2,7 +2,7 @@
 
 import dataclasses
 import logging
-from typing import Any, Literal, TypedDict, TypeVar
+from typing import Any, Literal, TypedDict
 
 from claude_agent_sdk import (
   AssistantMessage,
@@ -11,14 +11,12 @@ from claude_agent_sdk import (
   ToolUseBlock,
   query,
 )
-from pydantic import BaseModel
 
-from PDFindex.settings import settings
+from PDFindex.config import settings
+from PDFindex.types.completion import ResponseModel
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-ResponseModel = TypeVar('ResponseModel', bound=BaseModel)
 
 
 class JsonSchemaOutputFormat(TypedDict):
@@ -53,7 +51,7 @@ DISALLOWED_TOOLS: list[str] = [
 ]
 
 DEFAULT_OPTIONS = ClaudeAgentOptions(
-  model=settings.model,
+  model=settings.claude_model,
   max_turns=1,
   thinking={'type': 'disabled'},
   setting_sources=[],
@@ -88,13 +86,13 @@ async def generate_structured_completion(
   """Run one non-interactive Claude Agent SDK query and validate its reply against a schema.
 
   Args:
-      prompt: The user-turn text sent to the model.
-      options: SDK options for the query. Its `output_format` is overridden to
-          enforce `response_model`'s schema, regardless of what's set here.
-      response_model: Pydantic model the reply's JSON must validate against.
+    prompt: The user-turn text sent to the model.
+    options: SDK options for the query. Its `output_format` is overridden to
+      enforce `response_model`'s schema, regardless of what's set here.
+    response_model: Pydantic model the reply's JSON must validate against.
 
   Returns:
-      An instance of `response_model` parsed from the model's reply.
+    An instance of `response_model` parsed from the model's reply.
 
   """
   output_format: JsonSchemaOutputFormat = {
@@ -114,16 +112,9 @@ async def generate_structured_completion(
           if isinstance(block, TextBlock):
             logger.debug({'Claude block text:': block.text})
             response_text += block.text
-          # The CLI enforces output_format's schema by having the model
-          # call a synthetic "StructuredOutput" tool instead of replying
-          # in prose; its already-parsed input is the real payload.
           elif isinstance(block, ToolUseBlock) and block.name == 'StructuredOutput':
             structured_output = block.input
   except Exception as e:
-    # max_turns=1 can trip after the model already delivered a usable reply
-    # (e.g. it tries a follow-up tool call and hits the turn cap doing so) -
-    # don't discard a perfectly good reply just because the CLI also
-    # reported an error once the turn limit closed the conversation.
     if not response_text and structured_output is None:
       logger.error({'Claude error:': str(e)})
       raise e

@@ -2,12 +2,12 @@ import asyncio
 
 import pytest
 
-from PDFindex.models import TreeStructure
-from PDFindex.settings import settings
-from PDFindex.toc_extraction import (
+from PDFindex.config import settings
+from PDFindex.indexing.toc_extraction import (
   generate_toc_continuation_structure,
   generate_toc_initial_structure,
 )
+from PDFindex.models import TreeStructure
 
 requires_live_claude = pytest.mark.skipif(
   not settings.claude_code_oauth_token,
