@@ -3,9 +3,9 @@ import sqlite3
 
 import pytest
 
-from PDFindex import storage
-from PDFindex.models import Node, Page, Tree
-from PDFindex.storage import sqlite as storage_backend
+from pdfindex import storage
+from pdfindex.models import Node, Page, Tree
+from pdfindex.storage import sqlite as storage_backend
 
 
 def _make_tree() -> Tree:

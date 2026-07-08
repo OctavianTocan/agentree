@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
-from PDFindex.models import Node, Page, Tree
+from pdfindex.models import Node, Page, Tree
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (

@@ -12,8 +12,8 @@ from claude_agent_sdk import (
   query,
 )
 
-from PDFindex.config import settings
-from PDFindex.types.completion import ResponseModel
+from pdfindex.config import settings
+from pdfindex.types.completion import ResponseModel
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

@@ -1,6 +1,6 @@
 """Pydantic schemas for documents, pages, and extracted structure."""
 
-from PDFindex.models.schemas import (
+from pdfindex.models.schemas import (
   BoolModel,
   Node,
   Page,

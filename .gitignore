@@ -1,7 +1,28 @@
-example/
+# Local environment
 .venv/
 .python-version
-__pycache__/
 .env
 pdf_index.log
 .omo/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+
+# Reference vendored upstream (kept locally, not versioned)
+PageIndex/
+
+# Personal notes, learning material, and examples (local only)
+examples/
+docs/
+learning-records/
+learning_records/
+lessons/
+reference/
+GLOSSARY.md
+MISSION.md
+RESOURCES.md
+NOTES.md
+
+# Agent runtime memory (local only; skills/protocols stay tracked)
+.agent/memory/

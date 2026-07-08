@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from pydantic_settings import SettingsConfigDict
 
-from PDFindex.config.settings import Settings
+from pdfindex.config.settings import Settings
 
 
 class _SettingsForTests(Settings):

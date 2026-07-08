@@ -1,6 +1,6 @@
 """SQLite persistence for indexed PDF corpora."""
 
-from PDFindex.storage.sqlite import (
+from pdfindex.storage.sqlite import (
   compute_content_hash,
   get_document,
   get_document_structure,

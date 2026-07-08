@@ -1,10 +1,10 @@
 """Factory for selecting a structured completion client at runtime."""
 
-from PDFindex.completion.claude import ClaudeCompletionClient
-from PDFindex.completion.codex import CodexCompletionClient
-from PDFindex.completion.protocol import StructuredCompletionClient
-from PDFindex.config import settings
-from PDFindex.types.aliases import CompletionClientAlias
+from pdfindex.completion.claude import ClaudeCompletionClient
+from pdfindex.completion.codex import CodexCompletionClient
+from pdfindex.completion.protocol import StructuredCompletionClient
+from pdfindex.config import settings
+from pdfindex.types.aliases import CompletionClientAlias
 
 
 def create_completion_client(

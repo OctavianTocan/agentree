@@ -5,7 +5,7 @@ import os
 from openai_codex.generated.v2_all import Personality, ReasoningEffort
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from PDFindex.types.aliases import (
+from pdfindex.types.aliases import (
   ClaudeModelAlias,
   CodexModelAlias,
   CompletionClientAlias,

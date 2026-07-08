@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from PDFindex.types.completion import ResponseModel
+from pdfindex.types.completion import ResponseModel
 
 
 class StructuredCompletionClient(Protocol):

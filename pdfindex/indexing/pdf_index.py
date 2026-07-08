@@ -6,13 +6,13 @@ import math
 
 from pypdf import PdfReader
 
-from PDFindex.config import settings
-from PDFindex.indexing.toc_extraction import (
+from pdfindex.config import settings
+from pdfindex.indexing.toc_extraction import (
   check_page_for_toc,
   generate_toc_continuation_structure,
   generate_toc_initial_structure,
 )
-from PDFindex.models import Page, PageChunk, TreeStructure
+from pdfindex.models import Page, PageChunk, TreeStructure
 
 logger: logging.Logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -46,8 +46,12 @@ def index(pdf_path: str) -> list[TreeStructure]:
   ### We need to extract the table of contents from the document, ###
   ### and then use it to index the document. ###
 
+  raw_pages: list[Page] = [
+    Page(content=text, tokens=token_count) for text, token_count in page_list
+  ]
+
   # Check if the document has a table of contents.
-  toc_pages: list[tuple[int, Page]] | None = find_toc_pages(page_list)
+  toc_pages: list[tuple[int, Page]] = find_toc_pages(raw_pages)
 
   # --- DOCUMENT INDEXING WITH TABLE OF CONTENTS --- #
   if toc_pages:
@@ -63,15 +67,15 @@ def index(pdf_path: str) -> list[TreeStructure]:
   else:
     pages: list[Page] = process(page_list)
     # Chunk the pages into chunks with overlap between them.
-    chunk_texts: list[str] = chunk_pages_with_overlap(pages)
-    logger.info(f'len(chunk_texts): {len(chunk_texts)}')
+    chunk_pages: list[PageChunk] = chunk_pages_with_overlap(pages)
+    logger.info(f'len(chunk_pages): {len(chunk_pages)}')
 
-    document_structure = asyncio.run(generate_toc_initial_structure(chunk_texts[0]))
+    document_structure = asyncio.run(generate_toc_initial_structure(chunk_pages[0].content))
     logger.info(f'initial_structure: {document_structure}')
 
-    for chunk_text in chunk_texts[1:]:
+    for chunk in chunk_pages[1:]:
       continuation_structure = asyncio.run(
-        generate_toc_continuation_structure(chunk_text, document_structure)
+        generate_toc_continuation_structure(chunk.content, document_structure)
       )
       logger.info(f'continuation_structure: {continuation_structure}')
       document_structure.extend(continuation_structure)
@@ -152,33 +156,26 @@ async def build_document_node_tree(page_list):
 
 # TODO: Couldn't this just be done in the extract_text_and_tokens function?
 # Seems kinda silly to do it here.
-def process(pages: list[Page], start_index: int = 1) -> list[Page]:
-  """Tag each page with its physical index and return the pages in the correct format.
+def process(raw_pages: list[tuple[str, int]], start_index: int = 1) -> list[Page]:
+  """Tag each page with its physical index and return tagged Page objects.
 
   Args:
-      pages: The pages to tag and process.
-      start_index: Physical index (1-indexed) of the first page in `pages`.
+      raw_pages: Untagged `(page_text, token_count)` tuples from PDF extraction.
+      start_index: Physical index (1-indexed) of the first page in `raw_pages`.
 
   Returns:
-      Page-tagged chunk texts, each under the token budget.
+      Pages whose `content` includes `<physical_index_N>` markers.
 
   """
-  pages: list[Page] = []
-  for page_index in range(start_index, start_index + len(pages)):
-    # Tag the page text with its physical index.
-    page_text = (
-      f'<physical_index_{page_index}>\n'
-      f'{pages[page_index - start_index].content}\n'
-      f'<physical_index_{page_index}>\n\n'
-    )
+  tagged_pages: list[Page] = []
+  for page_index in range(start_index, start_index + len(raw_pages)):
+    raw_text, _token_count = raw_pages[page_index - start_index]
+    page_text = f'<physical_index_{page_index}>\n{raw_text}\n<physical_index_{page_index}>\n\n'
 
-    # Count the tokens in the page text.
     token_count = count_tokens(page_text)
+    tagged_pages.append(Page(content=page_text, tokens=token_count))
 
-    # Add the page to the pages list.
-    pages.append(Page(content=page_text, tokens=token_count))
-
-  return pages
+  return tagged_pages
 
 
 # TODO: Would love to use Pydantic here. That would be pretty cool.
@@ -192,16 +189,16 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[P
           boundary isn't missed.
 
   Returns:
-      Concatenated chunk texts, each under `MAX_TOKENS_PER_CHUNK`.
+      Page chunks, each under `MAX_TOKENS_PER_CHUNK`.
 
   """
   # Calculate the total token count of the pages.
   total_token_count = sum([page.tokens for page in pages])
 
-  # Merge all pages into one text if the total token count is less than the token budget.
+  # Merge all pages into one chunk if the total token count is less than the token budget.
   if total_token_count <= MAX_TOKENS_PER_CHUNK:
     page_text = ''.join([page.content for page in pages])
-    return [page_text]
+    return [PageChunk(content=page_text)]
 
   # Calculate the expected number of groups to split the pages into.
   expected_chunks_num = math.ceil(total_token_count / MAX_TOKENS_PER_CHUNK)
@@ -252,7 +249,7 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[P
 
   # Add the last group to the list of groups.
   if current_chunk_pages:
-    chunks.append(''.join(current_chunk_pages))
+    chunks.append(PageChunk(content=''.join(current_chunk_pages)))
 
   logger.debug(f'len(chunks): {len(chunks)}')
   return chunks

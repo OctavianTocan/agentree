@@ -1,26 +1,37 @@
 [project]
 name = "pdf-indexing-pages-for-agents"
 version = "0.1.0"
-description = "Add your description here"
+description = "Index PDF documents into a hierarchical section tree for agent retrieval, using Claude or Codex structured completions instead of vector chunking."
 readme = "README.md"
 requires-python = ">=3.10"
+keywords = ["pdf", "indexing", "rag", "agents", "claude", "codex", "mcp"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Text Processing :: Indexing",
+]
 dependencies = [
-    "claude-agent-sdk>=0.2.110",
-    "httpx>=0.28.1",
-    "mcp[cli]>=1.28.1",
-    "openai-codex",
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.2",
-    "pypdf>=6.14.2",
-    "typer>=0.26.8",
+  "claude-agent-sdk>=0.2.110",
+  "httpx>=0.28.1",
+  "mcp[cli]>=1.28.1",
+  "openai-codex",
+  "pydantic>=2.13.4",
+  "pydantic-settings>=2.14.2",
+  "pypdf>=6.14.2",
+  "typer>=0.26.8",
 ]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.6.0",
-    "pytest>=9.1.1",
-    "ruff>=0.15.20",
-    "ty>=0.0.56",
+  "pre-commit>=4.6.0",
+  "pytest>=9.1.1",
+  "ruff>=0.15.20",
+  "ty>=0.0.56",
 ]
 
 [tool.pytest.ini_options]
@@ -29,7 +40,7 @@ pythonpath = ["."]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-exclude = [".agent", "examples", "PageIndex"]
+exclude = [".agent", "examples", "PageIndex", "docs", "lessons", "reference", "learning-records"]
 indent-width = 2
 
 [tool.ruff.format]
@@ -51,9 +62,8 @@ ignore = [
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"PDFindex/**" = ["N999"]
-"PDFindex/indexing/prompts.py" = ["E501"]
-"PDFindex/storage/sqlite.py" = ["S608"]
+"pdfindex/indexing/prompts.py" = ["E501"]
+"pdfindex/storage/sqlite.py" = ["S608"]
 "main.py" = ["D100"]
 "tests/**/*.py" = ["S101", "D100", "D101", "D102", "D103", "D104", "PT011", "RUF007"]
 

@@ -1,5 +1,5 @@
-from PDFindex.indexing.pdf_index import MAX_TOKENS_PER_CHUNK, chunk_pages_with_overlap
-from PDFindex.models import Page
+from pdfindex.indexing.pdf_index import MAX_TOKENS_PER_CHUNK, chunk_pages_with_overlap
+from pdfindex.models import Page
 
 
 def make_page(label: str, tokens: int) -> Page:
@@ -11,7 +11,7 @@ def test_single_chunk_when_everything_fits_under_budget():
 
   chunks = chunk_pages_with_overlap(pages)
 
-  assert chunks == ['<A><B><C>']
+  assert [chunk.content for chunk in chunks] == ['<A><B><C>']
 
 
 def test_splits_into_multiple_chunks_when_over_budget():
@@ -23,7 +23,7 @@ def test_splits_into_multiple_chunks_when_over_budget():
 
   assert len(chunks) > 1
   for page in pages:
-    assert any(page.content in chunk for chunk in chunks), f'{page.content} was dropped'
+    assert any(page.content in chunk.content for chunk in chunks), f'{page.content} was dropped'
 
 
 def test_consecutive_chunks_share_overlap_content():
@@ -35,7 +35,9 @@ def test_consecutive_chunks_share_overlap_content():
   assert len(chunks) > 1
   for previous_chunk, next_chunk in zip(chunks, chunks[1:], strict=False):
     shared = [
-      page for page in pages if page.content in previous_chunk and page.content in next_chunk
+      page
+      for page in pages
+      if page.content in previous_chunk.content and page.content in next_chunk.content
     ]
     assert shared, 'consecutive chunks should share at least one overlapping page'
 
@@ -47,4 +49,4 @@ def test_oversized_single_page_is_not_dropped():
 
   chunks = chunk_pages_with_overlap(pages)
 
-  assert any(huge.content in chunk for chunk in chunks)
+  assert any(huge.content in chunk.content for chunk in chunks)

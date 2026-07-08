@@ -1,12 +1,12 @@
 """Task-specific logic for extracting a document's tree structure without a table of contents."""
 
-from PDFindex.completion.factory import StructuredCompletionClient, create_completion_client
-from PDFindex.indexing.prompts import (
+from pdfindex.completion import StructuredCompletionClient, create_completion_client
+from pdfindex.indexing.prompts import (
   CHECK_PAGE_FOR_TOC_PROMPT,
   GENERATE_TREE_STRUCTURE_CONTINUATION_PROMPT,
   GENERATE_TREE_STRUCTURE_INITIAL_PROMPT,
 )
-from PDFindex.models import BoolModel, Page, TreeStructure, TreeStructureList
+from pdfindex.models import BoolModel, Page, TreeStructure, TreeStructureList
 
 
 async def check_page_for_toc(page: Page, client: StructuredCompletionClient | None = None) -> bool:

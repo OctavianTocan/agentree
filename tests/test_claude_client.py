@@ -1,19 +1,13 @@
 import dataclasses
 
-import pytest
 from pydantic import BaseModel
 
-from PDFindex.completion.claude_sdk import (
+from pdfindex.completion.claude_sdk import (
   DEFAULT_OPTIONS,
   generate_structured_completion,
   strip_json_fence,
 )
-from PDFindex.config import settings
-
-requires_live_claude = pytest.mark.skipif(
-  not settings.claude_code_oauth_token,
-  reason='requires a live Claude Agent SDK OAuth token',
-)
+from tests.conftest import requires_live_claude
 
 
 def test_strip_json_fence_removes_json_tagged_fence():

@@ -1,18 +1,12 @@
 import asyncio
 
-import pytest
-
-from PDFindex.config import settings
-from PDFindex.indexing.toc_extraction import (
+from pdfindex.completion import create_completion_client
+from pdfindex.indexing.toc_extraction import (
   generate_toc_continuation_structure,
   generate_toc_initial_structure,
 )
-from PDFindex.models import TreeStructure
-
-requires_live_claude = pytest.mark.skipif(
-  not settings.claude_code_oauth_token,
-  reason='requires a live Claude Agent SDK OAuth token',
-)
+from pdfindex.models import TreeStructure
+from tests.conftest import requires_live_claude
 
 FIRST_CHUNK = """<physical_index_1>
 TABLE OF CONTENTS
@@ -41,7 +35,8 @@ This section describes our results.
 
 @requires_live_claude
 def test_generate_toc_initial_structure_finds_overview_section():
-  sections = asyncio.run(generate_toc_initial_structure(FIRST_CHUNK))
+  client = create_completion_client('claude')
+  sections = asyncio.run(generate_toc_initial_structure(FIRST_CHUNK, client=client))
 
   assert any(section.title.strip().lower() == 'overview' for section in sections)
   assert all(isinstance(section, TreeStructure) for section in sections)
@@ -49,11 +44,14 @@ def test_generate_toc_initial_structure_finds_overview_section():
 
 @requires_live_claude
 def test_generate_toc_continuation_structure_finds_new_section_not_in_previous():
+  client = create_completion_client('claude')
   previous_structure = [
     TreeStructure(structure='1', title='Overview', physical_index='<physical_index_2>'),
     TreeStructure(structure='2', title='Methods', physical_index=None),
   ]
 
-  new_sections = asyncio.run(generate_toc_continuation_structure(SECOND_CHUNK, previous_structure))
+  new_sections = asyncio.run(
+    generate_toc_continuation_structure(SECOND_CHUNK, previous_structure, client=client)
+  )
 
   assert any(section.title.strip().lower() == 'results' for section in new_sections)

@@ -3,7 +3,7 @@ import os
 
 import typer
 
-from PDFindex.indexing import index
+from pdfindex.indexing import index
 
 logging.basicConfig(
   level=logging.INFO,
