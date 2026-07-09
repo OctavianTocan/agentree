@@ -37,9 +37,27 @@ Or via the justfile: `just check`.
 ## Pull requests
 
 1. Branch from `main`.
-2. Make focused commits (conventional commits preferred: `feat:`, `fix:`, `docs:`).
+2. Use [Conventional Commits](https://www.conventionalcommits.org/) — they drive
+   the changelog and releases:
+   - `feat:` → minor bump (or patch while pre-1.0, per release-please config)
+   - `fix:` → patch bump
+   - `feat!:` / `fix!:` / `BREAKING CHANGE:` → major bump
+   - `docs:`, `chore:`, `ci:`, `test:` → usually no release by themselves
 3. Ensure CI is green.
 4. Fill in the PR template: what/why, and which commands you ran.
+
+## Releases
+
+[Release Please](https://github.com/googleapis/release-please) runs on every
+push to `main`. It opens (or updates) a release PR that bumps
+`pyproject.toml`, refreshes `CHANGELOG.md`, and updates the version marker in
+`README.md`. Merging that PR tags `vX.Y.Z` and creates the GitHub Release.
+
+Do **not** hand-edit `CHANGELOG.md` for routine work — put the story in the
+commit message / PR title instead.
+
+If branch rules block `github-actions[bot]`, add a fine-scoped PAT (or GitHub
+App token) as the `RELEASE_PLEASE_TOKEN` repository secret.
 
 ## Security
 

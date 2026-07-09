@@ -15,9 +15,9 @@ needs. See [Acknowledgments](#acknowledgments) and [NOTICE](NOTICE).
 
 **Not affiliated with Vectify AI or PageIndex.**
 
-**Status:** alpha (`0.1.0`). The no-TOC indexing path and CLI run today.
-Persistence, nested tree assembly, TOC-found indexing, and the MCP server are
-still in progress.
+**Status:** alpha (`0.1.0`<!-- x-release-please-version -->). The no-TOC indexing
+path and CLI run today. Persistence, nested tree assembly, TOC-found indexing,
+and the MCP server are still in progress.
 
 ## Why this shape
 
@@ -152,4 +152,5 @@ search loop. Full copyright notice: [NOTICE](NOTICE).
 
 MIT. See [LICENSE](LICENSE). Third-party notices: [NOTICE](NOTICE).
 
-Changelog: [CHANGELOG.md](CHANGELOG.md).
+Changelog: [CHANGELOG.md](CHANGELOG.md) (maintained by Release Please from
+conventional commits on `main`).

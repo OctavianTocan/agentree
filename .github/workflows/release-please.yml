@@ -1,0 +1,25 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release PR / GitHub Release
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          # Prefer a PAT/App token if branch rules require reviews or block
+          # github-actions[bot]. Otherwise GITHUB_TOKEN is enough to open the
+          # release PR and publish the GitHub Release after that PR merges.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
