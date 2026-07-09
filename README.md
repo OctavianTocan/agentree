@@ -6,15 +6,15 @@
 </p>
 
 <p align="center">
+  <strong>Index born-digital PDFs into a hierarchical section tree for agent retrieval.</strong><br/>
+  Uses Claude or Codex structured completions instead of vector chunking.
+</p>
+
+<p align="center">
   <a href="https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml"><img alt="CodeQL" src="https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
   <a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-blue.svg"></a>
-</p>
-
-<p align="center">
-  <strong>Index born-digital PDFs into a hierarchical section tree for agent retrieval.</strong><br/>
-  Uses Claude or Codex structured completions instead of vector chunking.
 </p>
 
 Heavily inspired by [PageIndex](https://github.com/VectifyAI/PageIndex) (Vectify AI):
