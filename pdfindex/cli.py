@@ -27,6 +27,11 @@ def main(
     raise ValueError(f'PDF file not found: {pdf_path}')
 
   logger.bind(pdf_path=pdf_path).info('Processing PDF')
+  # TODO: Persist the result once index() returns Tree (+ pages): init_db,
+  # store_document, and optionally print doc_id. Today the return value is
+  # discarded. Also add a --db_path (or corpus/) flag when wiring storage.
+  # TODO: MCP server entrypoint is separate (see TODO.md); this CLI stays the
+  # indexer front door.
   index(pdf_path)
 
 

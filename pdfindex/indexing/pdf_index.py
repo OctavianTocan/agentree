@@ -20,6 +20,9 @@ MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
 TOP_CHECK_PAGE_NUM = settings.top_check_page_num
 
 
+# TODO: Change return type to Tree (nested Node tree + doc_description), and
+# also surface per-page text so storage / get_page_content can persist it.
+# Today we only return a flat list[TreeStructure]; see TODO.md "Flat → nested Tree".
 def index(pdf_path: str) -> list[TreeStructure]:
   """Index a PDF file with no table of contents into a flat list of sections.
 
@@ -41,10 +44,7 @@ def index(pdf_path: str) -> list[TreeStructure]:
     total_token=sum(page[1] for page in page_list),
   ).info('Extracted PDF pages')
 
-  ### TOC EXTRACTION ###
-  ### We need to extract the table of contents from the document, ###
-  ### and then use it to index the document. ###
-
+  # TODO: Why do we have this, aside from the page_list that we already have? Odd.
   raw_pages: list[Page] = [
     Page(content=text, tokens=token_count) for text, token_count in page_list
   ]
@@ -55,12 +55,13 @@ def index(pdf_path: str) -> list[TreeStructure]:
   # --- DOCUMENT INDEXING WITH TABLE OF CONTENTS --- #
   if toc_pages:
     logger.bind(toc_page_count=len(toc_pages)).debug('Found TOC pages')
-    # TODO: We need to extract the table of contents from the document.
-    # TODO: We need to use the table of contents to index the document.
-    # TODO: We need to return the indexed document.
-    # TODO: Not quite sure how, but we need to build the document structure
-    # from the table of contents, similar to how we do it without a table
-    # of contents. But I don't know yet what data we can do all of that with.
+    # TODO: TOC-found path (MISSION.md). Implement in toc_extraction.py + here:
+    #   1. Extract TOC text from toc_pages (optionally merge with detect call).
+    #   2. Ask the LLM for structured JSON directly (no toc_transformer loop).
+    #   3. Map TOC entries → physical PDF page indices (simple mapping first;
+    #      PageIndex offset/verify cascade is deferred — see TODO.md).
+    #   4. Assign document_structure from that result, then fall through to
+    #      flat→Tree assembly below (same as the no-TOC path).
     ...
   # --- DOCUMENT INDEXING WITHOUT TABLE OF CONTENTS --- #
   else:
@@ -85,6 +86,8 @@ def index(pdf_path: str) -> list[TreeStructure]:
       )
       document_structure.extend(continuation_structure)
 
+  # TODO: After either branch, assemble Tree via build_document_node_tree,
+  # generate doc_description, and return Tree (+ pages) instead of this flat list.
   return document_structure
 
 
@@ -154,6 +157,11 @@ def count_tokens(text: str) -> int:
   return len(text) // 4
 
 
+# TODO: Implement flat list[TreeStructure] → nested Tree/Node assembly:
+# derive end_index from the next section's start, nest via dotted `structure`
+# codes, assign zero-padded node_id. PageIndex refs: post_processing,
+# list_to_tree, write_node_id (utils.py). Then optionally generate
+# doc_description (one LLM call over the text-stripped tree).
 async def build_document_node_tree(page_list):
   """Placeholder for building the final Node/Tree structure. Not yet implemented."""
   ...

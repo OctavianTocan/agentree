@@ -24,5 +24,4 @@ MISSION.md
 RESOURCES.md
 NOTES.md
 
-# Agent runtime memory (local only; skills/protocols stay tracked)
-.agent/memory/
+.agent/

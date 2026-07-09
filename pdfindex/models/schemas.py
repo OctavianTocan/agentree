@@ -38,6 +38,9 @@ class BoolModel(StrictModel):
   value: bool = Field(description='The boolean value.')
 
 
+# TODO: index() should eventually return Tree (not list[TreeStructure]).
+# Node/Tree below are the storage + MCP contract; the producer still emits
+# flat TreeStructure only — see build_document_node_tree in pdf_index.py.
 class Node(BaseModel):
   """One section of a document; may nest child sections."""
 
@@ -61,6 +64,7 @@ class Tree(BaseModel):
   """The full index for one document: its section tree plus doc-level metadata."""
 
   doc_name: str = Field(description='Filename of the indexed document.')
+  # TODO: Populate via generate_doc_description once tree assembly exists.
   doc_description: str | None = Field(
     default=None,
     description='LLM-generated one-line description distinguishing this document from others.',

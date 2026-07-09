@@ -1,5 +1,11 @@
 """System prompts for the no-TOC tree-structure extraction task."""
 
+# TODO: Add prompts for the TOC-found path and doc_description:
+#   - EXTRACT_TOC_CONTENT / TOC_TO_STRUCTURE (direct JSON; no continuation loop)
+#   - GENERATE_DOC_DESCRIPTION (one-liner over the text-stripped tree)
+# Optionally enrich CHECK_PAGE_FOR_TOC_PROMPT to return TOC text when present
+# so detect+extract can be a single call (see find_toc_pages TODO).
+
 CHECK_PAGE_FOR_TOC_PROMPT = """
     You are an expert in checking if a page has a table of contents.
 

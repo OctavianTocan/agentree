@@ -8,6 +8,13 @@ from pdfindex.indexing.prompts import (
 )
 from pdfindex.models import BoolModel, Page, TreeStructure, TreeStructureList
 
+# TODO: Add TOC-found helpers used by pdf_index.index when toc_pages is non-empty:
+#   - extract_toc_content(pages) → raw TOC text (or merge into check_page_for_toc)
+#   - toc_to_structure(toc_text) → list[TreeStructure] via one direct LLM call
+#     (deliberately skip PageIndex toc_transformer continuation; see MISSION.md)
+#   - prompts for those live in prompts.py (also TODO there)
+# TODO: Add generate_doc_description(tree) — one LLM call over the cleaned tree.
+
 
 async def check_page_for_toc(page: Page, client: StructuredCompletionClient | None = None) -> bool:
   """Check if the page has a table of contents.
