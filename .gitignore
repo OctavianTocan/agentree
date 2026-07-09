@@ -30,3 +30,7 @@ learning_records/
 lessons/
 reference/
 .cache/
+
+# AI Agent Files
+AGENTS.md
+CLAUDE.md
