@@ -48,6 +48,8 @@
     "editor.tabSize": 2
   },
   "[markdown]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
     "editor.wordWrap": "on",
     "files.trimTrailingWhitespace": false
   },
