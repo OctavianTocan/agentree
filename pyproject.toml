@@ -20,12 +20,6 @@ classifiers = [
   "Topic :: Text Processing :: Indexing",
 ]
 
-[project.urls]
-Homepage = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents"
-Repository = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents"
-Issues = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/issues"
-Changelog = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/blob/main/CHANGELOG.md"
-Security = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/blob/main/SECURITY.md"
 dependencies = [
   "claude-agent-sdk>=0.2.110",
   "httpx>=0.28.1",
@@ -37,6 +31,13 @@ dependencies = [
   "pypdf>=6.14.2",
   "typer>=0.26.8",
 ]
+
+[project.urls]
+Homepage = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents"
+Repository = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents"
+Issues = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/issues"
+Changelog = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/blob/main/CHANGELOG.md"
+Security = "https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/blob/main/SECURITY.md"
 
 [project.scripts]
 pdfindex = "pdfindex.cli:app"
