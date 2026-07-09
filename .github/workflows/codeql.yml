@@ -16,6 +16,8 @@ permissions:
 jobs:
   analyze:
     name: Analyze (Python)
+    # Code scanning SARIF upload needs a public repo or GitHub Advanced Security.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
