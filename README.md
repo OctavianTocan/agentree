@@ -17,6 +17,8 @@
   <a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-blue.svg"></a>
 </p>
 
+## Inspiration
+
 Heavily inspired by [PageIndex](https://github.com/VectifyAI/PageIndex) (Vectify AI):
 vectorless tree RAG where the document's structure *is* the index. An agent
 reasons over section titles and page ranges, then fetches only the pages it
