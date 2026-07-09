@@ -1,12 +1,17 @@
+import asyncio
+
 import pytest
 
 from pdfindex.completion import create_completion_client
 from pdfindex.completion.claude import ClaudeCompletionClient
 from pdfindex.completion.codex import CodexCompletionClient
+from pdfindex.completion.disabled import DisabledCompletionClient
 from pdfindex.config import settings
+from pdfindex.models import BoolModel, TreeStructureList
 
 
 def test_create_completion_client_defaults_to_claude(monkeypatch):
+  monkeypatch.setattr(settings, 'completions_enabled', True)
   monkeypatch.setattr(settings, 'completion_client', 'claude')
 
   client = create_completion_client()
@@ -14,14 +19,37 @@ def test_create_completion_client_defaults_to_claude(monkeypatch):
   assert isinstance(client, ClaudeCompletionClient)
 
 
-def test_create_completion_client_selects_codex():
+def test_create_completion_client_selects_codex(monkeypatch):
+  monkeypatch.setattr(settings, 'completions_enabled', True)
+
   client = create_completion_client('codex')
 
   assert isinstance(client, CodexCompletionClient)
 
 
 def test_create_completion_client_rejects_unknown_provider(monkeypatch):
+  monkeypatch.setattr(settings, 'completions_enabled', True)
   monkeypatch.setattr(settings, 'completion_client', 'bogus')
 
   with pytest.raises(ValueError, match='Invalid completion client'):
     create_completion_client()
+
+
+def test_create_completion_client_returns_disabled_when_completions_off(monkeypatch):
+  monkeypatch.setattr(settings, 'completions_enabled', False)
+
+  client = create_completion_client('codex')
+
+  assert isinstance(client, DisabledCompletionClient)
+
+
+def test_disabled_completion_client_returns_empty_structured_responses():
+  client = DisabledCompletionClient()
+
+  bool_result = asyncio.run(client.complete('prompt', BoolModel, system_prompt='system'))
+  sections_result = asyncio.run(
+    client.complete('prompt', TreeStructureList, system_prompt='system')
+  )
+
+  assert bool_result == BoolModel(value=False)
+  assert sections_result == TreeStructureList(sections=[])

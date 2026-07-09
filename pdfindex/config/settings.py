@@ -21,6 +21,9 @@ class Settings(BaseSettings):
   # The completion client to use: claude or codex.
   completion_client: CompletionClientAlias = 'claude'
 
+  # When false, skip AI completions and return empty structured responses.
+  completions_enabled: bool = True
+
   # The model to use for the Claude Agent SDK. Defaults to haiku.
   claude_model: ClaudeModelAlias = 'haiku'
 

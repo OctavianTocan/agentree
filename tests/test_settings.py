@@ -13,6 +13,7 @@ class _SettingsForTests(Settings):
 
 def test_defaults_when_unset(monkeypatch):
   monkeypatch.delenv('PDFINDEX_COMPLETION_CLIENT', raising=False)
+  monkeypatch.delenv('PDFINDEX_COMPLETIONS_ENABLED', raising=False)
   monkeypatch.delenv('PDFINDEX_CLAUDE_MODEL', raising=False)
   monkeypatch.delenv('PDFINDEX_MAX_TOKENS_PER_CHUNK', raising=False)
   monkeypatch.delenv('PDFINDEX_CLAUDE_CODE_OAUTH_TOKEN', raising=False)
@@ -20,9 +21,18 @@ def test_defaults_when_unset(monkeypatch):
   settings = _SettingsForTests()
 
   assert settings.completion_client == 'claude'
+  assert settings.completions_enabled is True
   assert settings.claude_model == 'haiku'
   assert settings.max_tokens_per_chunk == 20000
   assert settings.claude_code_oauth_token is None
+
+
+def test_reads_completions_enabled_as_bool(monkeypatch):
+  monkeypatch.setenv('PDFINDEX_COMPLETIONS_ENABLED', '0')
+
+  settings = _SettingsForTests()
+
+  assert settings.completions_enabled is False
 
 
 def test_rejects_invalid_claude_model_alias(monkeypatch):
