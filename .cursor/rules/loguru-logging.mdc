@@ -1,0 +1,40 @@
+---
+description: Use Loguru for all project logging (colors, catch, structured, diagnose)
+alwaysApply: true
+---
+
+# Logging: Loguru only
+
+Use [Loguru](https://github.com/Delgan/loguru) for all application logging. Do not add `import logging` / `logging.getLogger` in app code.
+
+## Setup
+
+- Configure once at process start via `pdfindex.logging_config.configure_logging()` (see `main.py`).
+- Import the shared logger: `from loguru import logger`.
+
+## Patterns
+
+```python
+# Messages use brace formatting (not %-style, prefer over f-strings for lazy eval)
+logger.info('Processing PDF: {}', pdf_path)
+
+# Structured context via bind()
+logger.bind(pdf_path=pdf_path, page_count=n).info('Extracted PDF pages')
+
+# Pretty JSON / multi-line payloads
+logger.debug('Claude final_response:\n{}', parsed.model_dump_json(indent=2))
+
+# Catch unexpected failures at entrypoints
+@logger.catch(reraise=True)
+def main(...):
+  ...
+
+# Descriptive exceptions (diagnose/backtrace enabled in configure_logging)
+logger.exception('Validation error for Codex response')
+```
+
+## Do not
+
+- Use stdlib `logging.basicConfig` / handlers in app modules.
+- Log giant SDK object `repr`s; log the validated / pretty payload instead.
+- Swallow exceptions without `logger.exception` (or `logger.opt(exception=True)`).

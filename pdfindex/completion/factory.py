@@ -31,8 +31,6 @@ def create_completion_client(
 
   if provider == 'claude':
     return ClaudeCompletionClient()
-  elif provider == 'codex':
+  if provider == 'codex':
     return CodexCompletionClient()
-  else:
-    print(f'Invalid completion client: {provider!r}')
-    return DisabledCompletionClient()
+  raise ValueError(f'Invalid completion client: {provider!r}')

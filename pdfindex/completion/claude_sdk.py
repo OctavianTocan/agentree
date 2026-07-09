@@ -1,7 +1,6 @@
 """Generic, task-agnostic wrapper for one-shot structured completions over the Claude Agent SDK."""
 
 import dataclasses
-import logging
 from typing import Any, Literal, TypedDict
 
 from claude_agent_sdk import (
@@ -11,12 +10,10 @@ from claude_agent_sdk import (
   ToolUseBlock,
   query,
 )
+from loguru import logger
 
 from pdfindex.config import settings
 from pdfindex.types.completion import ResponseModel
-
-logger: logging.Logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class JsonSchemaOutputFormat(TypedDict):
@@ -78,6 +75,71 @@ def strip_json_fence(response: str) -> str:
   return text.strip()
 
 
+async def _collect_claude_reply(
+  prompt: str,
+  options: ClaudeAgentOptions,
+) -> tuple[str, dict[str, Any] | None]:
+  """Collect text and/or StructuredOutput payload from one Claude query.
+
+  Args:
+    prompt: The user-turn text sent to the model.
+    options: SDK options for the query.
+
+  Returns:
+    `(response_text, structured_output)` where `structured_output` is set when
+    the model used the StructuredOutput tool.
+
+  """
+  response_text = ''
+  structured_output: dict[str, Any] | None = None
+
+  try:
+    async for message in query(prompt=prompt, options=options):
+      if not isinstance(message, AssistantMessage):
+        continue
+      for block in message.content:
+        if isinstance(block, TextBlock):
+          response_text += block.text
+        elif isinstance(block, ToolUseBlock) and block.name == 'StructuredOutput':
+          structured_output = block.input
+  except Exception:
+    if not response_text and structured_output is None:
+      logger.exception('Claude query failed before any reply was captured')
+      raise
+    logger.opt(exception=True).debug('Claude error ignored because a reply was already captured')
+
+  return response_text, structured_output
+
+
+def _parse_claude_reply(
+  response_model: type[ResponseModel],
+  response_text: str,
+  structured_output: dict[str, Any] | None,
+) -> ResponseModel:
+  """Validate Claude's reply against `response_model`, with pretty failure logs.
+
+  Args:
+    response_model: Pydantic model the reply must validate against.
+    response_text: Concatenated text blocks from the assistant.
+    structured_output: StructuredOutput tool input, if present.
+
+  Returns:
+    A validated `response_model` instance.
+
+  """
+  try:
+    if structured_output is not None:
+      return response_model.model_validate(structured_output)
+    return response_model.model_validate_json(strip_json_fence(response_text))
+  except Exception:
+    logger.exception('Validation error for Claude response')
+    if structured_output is not None:
+      logger.debug('Claude structured_output (raw):\n{}', structured_output)
+    else:
+      logger.debug('Claude response_text (raw):\n{}', response_text)
+    raise
+
+
 async def generate_structured_completion(
   prompt: str,
   options: ClaudeAgentOptions,
@@ -101,29 +163,7 @@ async def generate_structured_completion(
   }
   options = dataclasses.replace(options, output_format=output_format)
 
-  response_text = ''
-  structured_output: dict[str, Any] | None = None
-
-  try:
-    async for message in query(prompt=prompt, options=options):
-      if isinstance(message, AssistantMessage):
-        for block in message.content:
-          logger.debug({'Claude block:': block})
-          if isinstance(block, TextBlock):
-            logger.debug({'Claude block text:': block.text})
-            response_text += block.text
-          elif isinstance(block, ToolUseBlock) and block.name == 'StructuredOutput':
-            structured_output = block.input
-  except Exception as e:
-    if not response_text and structured_output is None:
-      logger.error({'Claude error:': str(e)})
-      raise e
-    logger.debug({'Claude error (ignored, reply already captured):': str(e)})
-
-  try:
-    if structured_output is not None:
-      return response_model.model_validate(structured_output)
-    return response_model.model_validate_json(strip_json_fence(response_text))
-  except Exception as e:
-    logger.error({'Validation error:': str(e)})
-    raise e
+  response_text, structured_output = await _collect_claude_reply(prompt, options)
+  parsed = _parse_claude_reply(response_model, response_text, structured_output)
+  logger.debug('Claude final_response:\n{}', parsed.model_dump_json(indent=2))
+  return parsed

@@ -1,17 +1,20 @@
 """Pydantic model definitions for document and structure schemas."""
 
 from typing import Any
-from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Self
 
 
 def require_all_properties(schema: dict[str, Any]) -> None:
-  """Codex/OpenAI strict schemas require every property to be defined.
-  This function adds a `required` property to the schema for each property.
+  """Ensure every property is listed in `required` for strict JSON schemas.
+
+  Codex/OpenAI strict schemas require every property to be defined. This
+  function adds a `required` property to the schema for each property.
 
   Args:
     schema: The schema to add the `required` property to.
+
   """
   if 'properties' not in schema:
     return
