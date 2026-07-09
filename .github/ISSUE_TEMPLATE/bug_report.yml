@@ -1,0 +1,58 @@
+name: Bug report
+description: Report something that is broken or incorrect
+labels: ['bug', 'status: alpha']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please search existing issues first.
+        Do **not** include secrets, OAuth tokens, or private PDFs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences describing the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, commands, and relevant config (redact secrets).
+      placeholder: |
+        1. uv sync
+        2. uv run pdfindex --pdf_path …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include stack traces or log excerpts if useful (redact secrets).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Tag, commit SHA, or `uv run pdfindex --help` environment notes.
+    validations:
+      required: false
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other
+    validations:
+      required: false

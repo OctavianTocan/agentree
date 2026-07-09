@@ -1,7 +1,6 @@
 # Local Environment
 .env
 .omo/
-.pdf_index.log
 .python-version
 .venv/
 *.log
@@ -24,9 +23,10 @@ GLOSSARY.md
 MISSION.md
 NOTES.md
 RESOURCES.md
+TODO.md
 docs/
-examples/
 learning-records/
 learning_records/
 lessons/
 reference/
+.cache/
