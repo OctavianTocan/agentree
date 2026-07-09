@@ -1,12 +1,21 @@
-# Agentree
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./.github/media/agentree-banner-dark.svg">
+    <img src="./.github/media/agentree-banner-light.svg" alt="Agentree" width="100%">
+  </picture>
+</p>
 
-[![CI](https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml/badge.svg)](https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml/badge.svg)](https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+<p align="center">
+  <a href="https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml"><img alt="CodeQL" src="https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-blue.svg"></a>
+</p>
 
-Index born-digital PDFs into a hierarchical **section tree** for agent retrieval.
-Uses Claude or Codex structured completions instead of vector chunking.
+<p align="center">
+  <strong>Index born-digital PDFs into a hierarchical section tree for agent retrieval.</strong><br/>
+  Uses Claude or Codex structured completions instead of vector chunking.
+</p>
 
 Heavily inspired by [PageIndex](https://github.com/VectifyAI/PageIndex) (Vectify AI):
 vectorless tree RAG where the document's structure *is* the index. An agent
