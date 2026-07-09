@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from pydantic_settings import SettingsConfigDict
 
-from pdfindex.config.settings import Settings
+from agentree.config.settings import Settings
 
 
 class _SettingsForTests(Settings):
@@ -12,11 +12,11 @@ class _SettingsForTests(Settings):
 
 
 def test_defaults_when_unset(monkeypatch):
-  monkeypatch.delenv('PDFINDEX_COMPLETION_CLIENT', raising=False)
-  monkeypatch.delenv('PDFINDEX_COMPLETIONS_ENABLED', raising=False)
-  monkeypatch.delenv('PDFINDEX_CLAUDE_MODEL', raising=False)
-  monkeypatch.delenv('PDFINDEX_MAX_TOKENS_PER_CHUNK', raising=False)
-  monkeypatch.delenv('PDFINDEX_CLAUDE_CODE_OAUTH_TOKEN', raising=False)
+  monkeypatch.delenv('AGENTREE_COMPLETION_CLIENT', raising=False)
+  monkeypatch.delenv('AGENTREE_COMPLETIONS_ENABLED', raising=False)
+  monkeypatch.delenv('AGENTREE_CLAUDE_MODEL', raising=False)
+  monkeypatch.delenv('AGENTREE_MAX_TOKENS_PER_CHUNK', raising=False)
+  monkeypatch.delenv('AGENTREE_CLAUDE_CODE_OAUTH_TOKEN', raising=False)
 
   settings = _SettingsForTests()
 
@@ -28,7 +28,7 @@ def test_defaults_when_unset(monkeypatch):
 
 
 def test_reads_completions_enabled_as_bool(monkeypatch):
-  monkeypatch.setenv('PDFINDEX_COMPLETIONS_ENABLED', '0')
+  monkeypatch.setenv('AGENTREE_COMPLETIONS_ENABLED', '0')
 
   settings = _SettingsForTests()
 
@@ -36,14 +36,14 @@ def test_reads_completions_enabled_as_bool(monkeypatch):
 
 
 def test_rejects_invalid_claude_model_alias(monkeypatch):
-  monkeypatch.setenv('PDFINDEX_CLAUDE_MODEL', 'not-a-real-model')
+  monkeypatch.setenv('AGENTREE_CLAUDE_MODEL', 'not-a-real-model')
 
   with pytest.raises(ValidationError):
     _SettingsForTests()
 
 
 def test_reads_max_tokens_per_chunk_as_int(monkeypatch):
-  monkeypatch.setenv('PDFINDEX_MAX_TOKENS_PER_CHUNK', '5000')
+  monkeypatch.setenv('AGENTREE_MAX_TOKENS_PER_CHUNK', '5000')
 
   settings = _SettingsForTests()
 

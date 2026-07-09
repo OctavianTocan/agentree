@@ -1,5 +1,5 @@
-from pdfindex.indexing.pdf_index import MAX_TOKENS_PER_CHUNK, chunk_pages_with_overlap
-from pdfindex.models import Page
+from agentree.indexing.pdf_index import MAX_TOKENS_PER_CHUNK, chunk_pages_with_overlap
+from agentree.models import Page
 
 
 def make_page(label: str, tokens: int) -> Page:

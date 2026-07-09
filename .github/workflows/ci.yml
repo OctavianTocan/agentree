@@ -22,13 +22,13 @@ jobs:
         run: uv sync
 
       - name: Check formatting
-        run: uv run ruff format --check pdfindex tests
+        run: uv run ruff format --check agentree tests
 
       - name: Lint
-        run: uv run ruff check pdfindex tests
+        run: uv run ruff check agentree tests
 
       - name: Type check
-        run: uv run ty check pdfindex tests
+        run: uv run ty check agentree tests
 
       - name: Test
         run: uv run pytest -q

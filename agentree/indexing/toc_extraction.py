@@ -1,12 +1,12 @@
 """Task-specific logic for extracting a document's tree structure without a table of contents."""
 
-from pdfindex.completion import StructuredCompletionClient, create_completion_client
-from pdfindex.indexing.prompts import (
+from agentree.completion import StructuredCompletionClient, create_completion_client
+from agentree.indexing.prompts import (
   CHECK_PAGE_FOR_TOC_PROMPT,
   GENERATE_TREE_STRUCTURE_CONTINUATION_PROMPT,
   GENERATE_TREE_STRUCTURE_INITIAL_PROMPT,
 )
-from pdfindex.models import BoolModel, Page, TreeStructure, TreeStructureList
+from agentree.models import BoolModel, Page, TreeStructure, TreeStructureList
 
 # TODO: Add TOC-found helpers used by pdf_index.index when toc_pages is non-empty:
 #   - extract_toc_content(pages) → raw TOC text (or merge into check_page_for_toc)

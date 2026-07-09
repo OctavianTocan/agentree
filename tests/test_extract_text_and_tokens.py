@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pdfindex.indexing.pdf_index import extract_text_and_tokens
+from agentree.indexing.pdf_index import extract_text_and_tokens
 
 SAMPLE_PDF = Path(__file__).parent.parent / 'examples' / 'documents' / 'q1-fy25-earnings.pdf'
 

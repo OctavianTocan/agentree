@@ -5,8 +5,8 @@ import os
 import typer
 from loguru import logger
 
-from pdfindex.indexing import index
-from pdfindex.logging_config import configure_logging
+from agentree.indexing import index
+from agentree.logging_config import configure_logging
 
 configure_logging()
 

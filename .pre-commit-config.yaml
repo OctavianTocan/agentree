@@ -3,19 +3,19 @@ repos:
     rev: v0.15.20
     hooks:
       - id: ruff-format
-        args: [pdfindex, tests]
-        files: ^(pdfindex/|tests/)
+        args: [agentree, tests]
+        files: ^(agentree/|tests/)
       - id: ruff
-        args: [pdfindex, tests]
-        files: ^(pdfindex/|tests/)
+        args: [agentree, tests]
+        files: ^(agentree/|tests/)
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        files: ^(pdfindex/|tests/)
+        files: ^(agentree/|tests/)
       - id: end-of-file-fixer
-        files: ^(pdfindex/|tests/)
+        files: ^(agentree/|tests/)
       - id: check-added-large-files
         args: ['--maxkb=20000']
         # Sample PDFs under examples/documents/ are intentional (largest ~17MB).
@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: ty
         name: ty
-        entry: uv run ty check pdfindex tests
+        entry: uv run ty check agentree tests
         language: system
         pass_filenames: false
-        files: ^(pdfindex/|tests/)
+        files: ^(agentree/|tests/)

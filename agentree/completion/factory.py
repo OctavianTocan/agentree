@@ -1,11 +1,11 @@
 """Factory for selecting a structured completion client at runtime."""
 
-from pdfindex.completion.claude import ClaudeCompletionClient
-from pdfindex.completion.codex import CodexCompletionClient
-from pdfindex.completion.disabled import DisabledCompletionClient
-from pdfindex.completion.protocol import StructuredCompletionClient
-from pdfindex.config import settings
-from pdfindex.types.aliases import CompletionClientAlias
+from agentree.completion.claude import ClaudeCompletionClient
+from agentree.completion.codex import CodexCompletionClient
+from agentree.completion.disabled import DisabledCompletionClient
+from agentree.completion.protocol import StructuredCompletionClient
+from agentree.config import settings
+from agentree.types.aliases import CompletionClientAlias
 
 
 def create_completion_client(

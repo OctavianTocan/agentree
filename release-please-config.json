@@ -8,7 +8,7 @@
   "changelog-path": "CHANGELOG.md",
   "packages": {
     ".": {
-      "package-name": "pdf-indexing-pages-for-agents",
+      "package-name": "agentree",
       "extra-files": [
         {
           "type": "generic",

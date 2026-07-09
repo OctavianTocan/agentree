@@ -1,4 +1,4 @@
-"""Loguru configuration for the pdfindex application."""
+"""Loguru configuration for the agentree application."""
 
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ def _format_with_extra(base_format: str, *, colorize_extra: bool) -> Any:
 def configure_logging(
   *,
   level: str = 'DEBUG',
-  log_file: str = 'pdf_index.log',
+  log_file: str = 'agentree.log',
 ) -> None:
   """Configure Loguru sinks for colored console output and a rotating file.
 

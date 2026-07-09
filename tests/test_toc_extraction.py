@@ -1,11 +1,11 @@
 import asyncio
 
-from pdfindex.completion import create_completion_client
-from pdfindex.indexing.toc_extraction import (
+from agentree.completion import create_completion_client
+from agentree.indexing.toc_extraction import (
   generate_toc_continuation_structure,
   generate_toc_initial_structure,
 )
-from pdfindex.models import TreeStructure
+from agentree.models import TreeStructure
 from tests.conftest import requires_live_claude
 
 FIRST_CHUNK = """<physical_index_1>

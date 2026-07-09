@@ -1,4 +1,4 @@
-from pdfindex.models import Node, Tree, TreeStructure, TreeStructureList
+from agentree.models import Node, Tree, TreeStructure, TreeStructureList
 
 
 def test_tree_round_trips_through_json():

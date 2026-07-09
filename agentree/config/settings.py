@@ -5,7 +5,7 @@ import os
 from openai_codex.generated.v2_all import Personality, ReasoningEffort
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from pdfindex.types.aliases import (
+from agentree.types.aliases import (
   ClaudeModelAlias,
   CodexModelAlias,
   CompletionClientAlias,
@@ -13,10 +13,10 @@ from pdfindex.types.aliases import (
 
 
 class Settings(BaseSettings):
-  """Application configuration, loaded from PDFINDEX_*-prefixed environment variables."""
+  """Application configuration, loaded from AGENTREE_*-prefixed environment variables."""
 
   # The configuration is loaded from the environment variables.
-  model_config = SettingsConfigDict(env_prefix='PDFINDEX_', env_file='.env')
+  model_config = SettingsConfigDict(env_prefix='AGENTREE_', env_file='.env')
 
   # The completion client to use: claude or codex.
   completion_client: CompletionClientAlias = 'claude'
@@ -49,6 +49,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # The Claude Agent SDK only recognizes the bare CLAUDE_CODE_OAUTH_TOKEN name - it
-# doesn't know about our PDFINDEX_ prefix, so mirror it across explicitly.
+# doesn't know about our AGENTREE_ prefix, so mirror it across explicitly.
 if settings.claude_code_oauth_token:
   os.environ['CLAUDE_CODE_OAUTH_TOKEN'] = settings.claude_code_oauth_token

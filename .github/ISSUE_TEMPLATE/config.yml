@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security report
-    url: https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/security/advisories/new
+    url: https://github.com/OctavianTocan/agentree/security/advisories/new
     about: Report a vulnerability privately (see SECURITY.md). Do not open a public issue.
   - name: Questions / discussion
-    url: https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/issues/new
+    url: https://github.com/OctavianTocan/agentree/issues/new
     about: For usage questions, open an issue with clear context (no secrets).

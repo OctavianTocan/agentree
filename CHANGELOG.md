@@ -6,11 +6,11 @@ This project uses [Release Please](https://github.com/googleapis/release-please)
 with [Conventional Commits](https://www.conventionalcommits.org/). Merging the
 automated release PR updates this file and publishes a GitHub Release.
 
-## [0.1.0](https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/releases/tag/v0.1.0) (2026-07-09)
+## [0.1.0](https://github.com/OctavianTocan/agentree/releases/tag/v0.1.0) (2026-07-09)
 
 ### Features
 
-- Initial `pdfindex` package and `pdfindex` CLI
+- Initial `agentree` package and `agentree` CLI
 - Claude Agent SDK and Codex structured-completion adapters
 - No-TOC PDF → flat section-structure indexing path
 - TOC page detection over leading pages

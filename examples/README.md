@@ -1,9 +1,9 @@
 # Examples
 
-Sample born-digital PDFs for local experiments with `pdfindex`.
+Sample born-digital PDFs for local experiments with `agentree`.
 
 ```bash
-uv run pdfindex --pdf_path examples/documents/q1-fy25-earnings.pdf
+uv run agentree --pdf_path examples/documents/q1-fy25-earnings.pdf
 ```
 
 ## Documents

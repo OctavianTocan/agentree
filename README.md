@@ -1,7 +1,7 @@
-# PDFIndex
+# Agentree
 
-[![CI](https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/actions/workflows/ci.yml/badge.svg)](https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/actions/workflows/codeql.yml/badge.svg)](https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/actions/workflows/codeql.yml)
+[![CI](https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml/badge.svg)](https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml/badge.svg)](https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 
@@ -25,7 +25,7 @@ Most RAG pipelines split text into fixed chunks and embed them. That loses
 document hierarchy and forces similarity search where an agent could just *read
 the outline*.
 
-PDFIndex aims for **retrieval-as-tools**:
+Agentree aims for **retrieval-as-tools**:
 
 1. Index a PDF into sections (`title`, page span, nested nodes when ready).
 2. Expose thin read tools over a corpus (structure + page ranges).
@@ -35,7 +35,7 @@ PDFIndex aims for **retrieval-as-tools**:
 
 | Piece | State |
 | --- | --- |
-| CLI `pdfindex --pdf_path …` | Works |
+| CLI `agentree --pdf_path …` | Works |
 | Text + token extraction (`pypdf`) | Works |
 | TOC page detection (leading pages) | Works |
 | No-TOC structure generation (chunked + continuation) | Works |
@@ -51,7 +51,7 @@ PDFIndex aims for **retrieval-as-tools**:
 - Python 3.10+
 - [uv](https://docs.astral.sh/uv/) (recommended)
 - For Claude: OAuth token from `claude setup-token` (`CLAUDE_CODE_OAUTH_TOKEN`
-  or `PDFINDEX_CLAUDE_CODE_OAUTH_TOKEN`)
+  or `AGENTREE_CLAUDE_CODE_OAUTH_TOKEN`)
 - For Codex: a working Codex SDK setup (see `openai-codex` git dependency)
 
 Born-digital PDFs only. Scanned / OCR docs are out of scope for now.
@@ -59,8 +59,8 @@ Born-digital PDFs only. Scanned / OCR docs are out of scope for now.
 ## Install
 
 ```bash
-git clone https://github.com/OctavianTocan/pdf-indexing-pages-for-agents.git
-cd pdf-indexing-pages-for-agents
+git clone https://github.com/OctavianTocan/agentree.git
+cd agentree
 uv sync
 cp .env.example .env   # add tokens locally; never commit .env
 ```
@@ -68,34 +68,34 @@ cp .env.example .env   # add tokens locally; never commit .env
 ## Usage
 
 ```bash
-uv run pdfindex --pdf_path /path/to/document.pdf
+uv run agentree --pdf_path /path/to/document.pdf
 ```
 
 Sample PDFs live under [`examples/documents/`](examples/):
 
 ```bash
-uv run pdfindex --pdf_path examples/documents/q1-fy25-earnings.pdf
+uv run agentree --pdf_path examples/documents/q1-fy25-earnings.pdf
 ```
 
 By default this uses the Claude completion client. Override via settings:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `PDFINDEX_COMPLETION_CLIENT` | `claude` | `claude` or `codex` |
-| `PDFINDEX_COMPLETIONS_ENABLED` | `true` | Set `false` to skip LLM calls (empty structured responses) |
-| `PDFINDEX_CLAUDE_MODEL` | `haiku` | Claude model alias |
-| `PDFINDEX_CODEX_MODEL` | `gpt-5.5` | Codex model alias |
-| `PDFINDEX_CLAUDE_CODE_OAUTH_TOKEN` | unset | Mirrored to `CLAUDE_CODE_OAUTH_TOKEN` for the Agent SDK |
-| `PDFINDEX_MAX_TOKENS_PER_CHUNK` | `20000` | Chunk size for no-TOC generation |
-| `PDFINDEX_TOP_CHECK_PAGE_NUM` | `20` | Leading pages scanned for a TOC |
+| `AGENTREE_COMPLETION_CLIENT` | `claude` | `claude` or `codex` |
+| `AGENTREE_COMPLETIONS_ENABLED` | `true` | Set `false` to skip LLM calls (empty structured responses) |
+| `AGENTREE_CLAUDE_MODEL` | `haiku` | Claude model alias |
+| `AGENTREE_CODEX_MODEL` | `gpt-5.5` | Codex model alias |
+| `AGENTREE_CLAUDE_CODE_OAUTH_TOKEN` | unset | Mirrored to `CLAUDE_CODE_OAUTH_TOKEN` for the Agent SDK |
+| `AGENTREE_MAX_TOKENS_PER_CHUNK` | `20000` | Chunk size for no-TOC generation |
+| `AGENTREE_TOP_CHECK_PAGE_NUM` | `20` | Leading pages scanned for a TOC |
 
 ## Layout
 
 ```
-pdfindex/
-  cli.py              # Typer entrypoint (`pdfindex`)
+agentree/
+  cli.py              # Typer entrypoint (`agentree`)
   logging_config.py   # Loguru setup
-  config/             # pydantic-settings (`PDFINDEX_*`)
+  config/             # pydantic-settings (`AGENTREE_*`)
   completion/         # Claude / Codex / disabled adapters
   indexing/           # PDF → structure orchestration
   models/             # Pydantic schemas
@@ -110,9 +110,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 uv sync
-uv run ruff format pdfindex tests
-uv run ruff check pdfindex tests
-uv run ty check pdfindex tests
+uv run ruff format agentree tests
+uv run ruff check agentree tests
+uv run ty check agentree tests
 uv run pytest -q
 ```
 
@@ -133,7 +133,7 @@ Please report vulnerabilities privately. See [SECURITY.md](SECURITY.md).
 
 ## Acknowledgments
 
-PDFIndex draws heavily on the ideas in
+Agentree draws heavily on the ideas in
 [PageIndex](https://github.com/VectifyAI/PageIndex) by Vectify AI (MIT License,
 Copyright 2025 Vectify AI): hierarchical section trees as the retrieval index,
 agent reasoning over structure, and thin read tools instead of vector search.

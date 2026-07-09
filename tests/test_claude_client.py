@@ -2,7 +2,7 @@ import dataclasses
 
 from pydantic import BaseModel
 
-from pdfindex.completion.claude_sdk import (
+from agentree.completion.claude_sdk import (
   DEFAULT_OPTIONS,
   generate_structured_completion,
   strip_json_fence,

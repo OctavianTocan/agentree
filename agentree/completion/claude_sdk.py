@@ -12,8 +12,8 @@ from claude_agent_sdk import (
 )
 from loguru import logger
 
-from pdfindex.config import settings
-from pdfindex.types.completion import ResponseModel
+from agentree.config import settings
+from agentree.types.completion import ResponseModel
 
 
 class JsonSchemaOutputFormat(TypedDict):

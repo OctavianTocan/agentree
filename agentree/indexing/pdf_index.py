@@ -6,13 +6,13 @@ import math
 from loguru import logger
 from pypdf import PdfReader
 
-from pdfindex.config import settings
-from pdfindex.indexing.toc_extraction import (
+from agentree.config import settings
+from agentree.indexing.toc_extraction import (
   check_page_for_toc,
   generate_toc_continuation_structure,
   generate_toc_initial_structure,
 )
-from pdfindex.models import Page, PageChunk, TreeStructure, TreeStructureList
+from agentree.models import Page, PageChunk, TreeStructure, TreeStructureList
 
 # The maximum number of tokens per chunk.
 MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk

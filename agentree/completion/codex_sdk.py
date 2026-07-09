@@ -3,8 +3,8 @@
 from loguru import logger
 from openai_codex import ApprovalMode, AsyncCodex, AsyncThread, Sandbox, TurnResult
 
-from pdfindex.config import settings
-from pdfindex.types.completion import ResponseModel
+from agentree.config import settings
+from agentree.types.completion import ResponseModel
 
 
 async def generate_structured_completion(

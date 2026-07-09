@@ -5,7 +5,7 @@ This repository includes original work by Octavian Tocan (MIT License; see
 
 ## PageIndex
 
-PDFIndex is inspired by the vectorless, tree-structured document indexing
+Agentree is inspired by the vectorless, tree-structured document indexing
 approach pioneered by [PageIndex](https://github.com/VectifyAI/PageIndex)
 (Vectify AI). The technique (structure-as-index, agent reasoning over section
 trees, retrieval-as-tools) informed this project's design.
@@ -40,6 +40,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-Where PDFIndex adapts ideas or structural patterns from PageIndex, that
+Where Agentree adapts ideas or structural patterns from PageIndex, that
 inspiration is acknowledged here. See the README Acknowledgments section for
 product-level attribution.

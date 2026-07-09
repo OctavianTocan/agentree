@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-PDFIndex is **alpha** (`0.x`). Security fixes are applied on a best-effort basis
+Agentree is **alpha** (`0.x`). Security fixes are applied on a best-effort basis
 to the latest commit on the default branch. There are no long-term support
 branches yet.
 
@@ -17,10 +17,10 @@ Please **do not** open a public issue for security reports.
 
 Prefer one of:
 
-1. [GitHub private vulnerability reporting](https://github.com/OctavianTocan/pdf-indexing-pages-for-agents/security/advisories/new)
+1. [GitHub private vulnerability reporting](https://github.com/OctavianTocan/agentree/security/advisories/new)
    (if enabled on this repository)
 2. Email: [contact@octaviantocan.com](mailto:contact@octaviantocan.com) with subject
-   `PDFIndex security`
+   `Agentree security`
 
 Include:
 

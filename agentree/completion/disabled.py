@@ -1,8 +1,8 @@
 """No-op completion client used when AI completions are disabled."""
 
-from pdfindex.completion.protocol import StructuredCompletionClient
-from pdfindex.models import BoolModel, TreeStructureList
-from pdfindex.types.completion import ResponseModel
+from agentree.completion.protocol import StructuredCompletionClient
+from agentree.models import BoolModel, TreeStructureList
+from agentree.types.completion import ResponseModel
 
 
 class DisabledCompletionClient(StructuredCompletionClient):

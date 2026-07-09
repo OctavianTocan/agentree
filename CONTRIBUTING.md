@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for considering a contribution to PDFIndex.
+Thanks for considering a contribution to Agentree.
 
 ## Ground rules
 
@@ -15,8 +15,8 @@ Thanks for considering a contribution to PDFIndex.
 Requirements: Python 3.10+, [uv](https://docs.astral.sh/uv/).
 
 ```bash
-git clone https://github.com/OctavianTocan/pdf-indexing-pages-for-agents.git
-cd pdf-indexing-pages-for-agents
+git clone https://github.com/OctavianTocan/agentree.git
+cd agentree
 uv sync
 cp .env.example .env   # fill in tokens locally; never commit .env
 ```
@@ -26,9 +26,9 @@ Optional: `uv run pre-commit install`
 ## Checks (same as CI)
 
 ```bash
-uv run ruff format --check pdfindex tests
-uv run ruff check pdfindex tests
-uv run ty check pdfindex tests
+uv run ruff format --check agentree tests
+uv run ruff check agentree tests
+uv run ty check agentree tests
 uv run pytest -q
 ```
 

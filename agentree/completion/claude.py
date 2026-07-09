@@ -2,8 +2,8 @@
 
 import dataclasses
 
-from pdfindex.completion.protocol import StructuredCompletionClient
-from pdfindex.types.completion import ResponseModel
+from agentree.completion.protocol import StructuredCompletionClient
+from agentree.types.completion import ResponseModel
 
 
 class ClaudeCompletionClient(StructuredCompletionClient):
@@ -17,7 +17,7 @@ class ClaudeCompletionClient(StructuredCompletionClient):
     system_prompt: str,
   ) -> ResponseModel:
     """Complete a prompt and return a response model."""
-    from pdfindex.completion.claude_sdk import DEFAULT_OPTIONS, generate_structured_completion
+    from agentree.completion.claude_sdk import DEFAULT_OPTIONS, generate_structured_completion
 
     options = dataclasses.replace(DEFAULT_OPTIONS, system_prompt=system_prompt)
 

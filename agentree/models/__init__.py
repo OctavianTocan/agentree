@@ -1,6 +1,6 @@
 """Pydantic schemas for documents, pages, and extracted structure."""
 
-from pdfindex.models.schemas import (
+from agentree.models.schemas import (
   BoolModel,
   Node,
   Page,

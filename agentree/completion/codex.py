@@ -1,7 +1,7 @@
 """Codex adapter for the structured completion protocol."""
 
-from pdfindex.completion.protocol import StructuredCompletionClient
-from pdfindex.types.completion import ResponseModel
+from agentree.completion.protocol import StructuredCompletionClient
+from agentree.types.completion import ResponseModel
 
 
 class CodexCompletionClient(StructuredCompletionClient):
@@ -15,7 +15,7 @@ class CodexCompletionClient(StructuredCompletionClient):
     system_prompt: str,
   ) -> ResponseModel:
     """Complete a prompt and return a response model."""
-    from pdfindex.completion.codex_sdk import generate_structured_completion
+    from agentree.completion.codex_sdk import generate_structured_completion
 
     return await generate_structured_completion(
       prompt=prompt,

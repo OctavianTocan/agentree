@@ -1,11 +1,11 @@
 """Reusable type aliases and type variables."""
 
-from pdfindex.types.aliases import (
+from agentree.types.aliases import (
   ClaudeModelAlias,
   CodexModelAlias,
   CompletionClientAlias,
 )
-from pdfindex.types.completion import ResponseModel
+from agentree.types.completion import ResponseModel
 
 __all__ = [
   'ClaudeModelAlias',

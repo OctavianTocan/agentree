@@ -1,40 +1,40 @@
 # TODO
 
-This is the markdown todo file for pdfindex.
+This is the markdown todo file for agentree.
 
 ## Indexing pipeline (vs PageIndex)
 
 Gaps that block a usable PDF → tree index. See `MISSION.md` and
-`reference/pageindex-pipeline.md`. Code markers live under `pdfindex/`.
+`reference/pageindex-pipeline.md`. Code markers live under `agentree/`.
 
 - [ ] **TOC-found path** — detection works; after `find_toc_pages` the branch
       is a stub. Need: extract TOC text from those pages, ask the LLM for
       structured JSON directly (no PageIndex `toc_transformer` continuation
       loop), map entries to physical pages. Prefer combining detect+extract
       in one LLM call when touching this.
-      (`pdfindex/indexing/pdf_index.py`, `toc_extraction.py`, `prompts.py`)
+      (`agentree/indexing/pdf_index.py`, `toc_extraction.py`, `prompts.py`)
 - [ ] **Flat → nested `Tree`** — `index()` returns `list[TreeStructure]`;
       storage and agents need `Tree` / `Node` (`start_index` / `end_index` /
       `node_id` / nested `nodes`). Implement assembly (PageIndex equivalents:
       `post_processing`, `list_to_tree`, `write_node_id`).
-      (`pdfindex/indexing/pdf_index.py` → `build_document_node_tree`)
+      (`agentree/indexing/pdf_index.py` → `build_document_node_tree`)
 - [ ] **`doc_description`** — one LLM call over the (text-stripped) tree so
       an agent can pick this doc out of many. Field exists on `Tree`; no
-      generator yet. (`pdfindex/indexing/`, `models/schemas.py`)
+      generator yet. (`agentree/indexing/`, `models/schemas.py`)
 - [ ] **Expose per-page text from `index()`** — `extract_text_and_tokens`
       already produces pages; they never leave the function. Storage and
       `get_page_content` need them. Return pages alongside the tree (or a
-      sibling API). (`pdfindex/indexing/pdf_index.py`)
+      sibling API). (`agentree/indexing/pdf_index.py`)
 
 ## Persistence
 
 - [ ] **Remake the SQLite storage layer manually** — current
-      `pdfindex/storage/sqlite.py` is fully commented out; rewrite/restore
+      `agentree/storage/sqlite.py` is fully commented out; rewrite/restore
       schema + read/write paths.
 - [ ] **Wire storage into the pipeline** — after `index()` emits a real
       `Tree` (+ pages), call `store_document` from the CLI/orchestrator so
       indexed PDFs persist under a corpus DB and can be queried later.
-      (`pdfindex/cli.py`, `pdfindex/storage/`)
+      (`agentree/cli.py`, `agentree/storage/`)
 
 ## Agent surface
 
@@ -62,4 +62,4 @@ These exist in PageIndex; we cut/deferred them on purpose (`MISSION.md`):
 
 # DONE
 
-- [x] Add a CLI command that launches pdfindex, `pdfindex`.
+- [x] Add a CLI command that launches agentree, `agentree`.

@@ -2,12 +2,12 @@ import asyncio
 
 import pytest
 
-from pdfindex.completion import create_completion_client
-from pdfindex.completion.claude import ClaudeCompletionClient
-from pdfindex.completion.codex import CodexCompletionClient
-from pdfindex.completion.disabled import DisabledCompletionClient
-from pdfindex.config import settings
-from pdfindex.models import BoolModel, TreeStructureList
+from agentree.completion import create_completion_client
+from agentree.completion.claude import ClaudeCompletionClient
+from agentree.completion.codex import CodexCompletionClient
+from agentree.completion.disabled import DisabledCompletionClient
+from agentree.config import settings
+from agentree.models import BoolModel, TreeStructureList
 
 
 def test_create_completion_client_defaults_to_claude(monkeypatch):

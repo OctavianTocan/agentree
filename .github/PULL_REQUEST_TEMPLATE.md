@@ -7,9 +7,9 @@
 - [ ] I read [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] Tests added/updated when behavior changes
 - [ ] No secrets, `.env`, or private documents in the diff
-- [ ] `uv run ruff format --check pdfindex tests`
-- [ ] `uv run ruff check pdfindex tests`
-- [ ] `uv run ty check pdfindex tests`
+- [ ] `uv run ruff format --check agentree tests`
+- [ ] `uv run ruff check agentree tests`
+- [ ] `uv run ty check agentree tests`
 - [ ] `uv run pytest -q`
 
 ## Validation
