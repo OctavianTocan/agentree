@@ -1,30 +1,32 @@
-# Local environment
-.venv/
-.python-version
+# Local Environment
 .env
-pdf_index.log
 .omo/
+.pdf_index.log
+.python-version
+.venv/
+*.log
 
-# Python artifacts
+# Python Artifacts
 __pycache__/
 *.py[cod]
 
-# Reference vendored upstream (kept locally, not versioned)
+# Local Agent & Tooling Metadata
+.agent/
+.agents/
+.claude/
+.cursor/
+
+# Reference Vendored Upstream (kept locally, not versioned)
 PageIndex/
 
-# Personal notes, learning material (local only)
+# Personal Notes & Learning Material (local only)
+GLOSSARY.md
+MISSION.md
+NOTES.md
+RESOURCES.md
 docs/
 examples/
 learning-records/
 learning_records/
 lessons/
 reference/
-GLOSSARY.md
-MISSION.md
-RESOURCES.md
-NOTES.md
-
-.agent/
-.claude/
-.agents/
-.cursor/
