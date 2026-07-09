@@ -25,3 +25,5 @@ RESOURCES.md
 NOTES.md
 
 .agent/
+.claude/
+.agents/

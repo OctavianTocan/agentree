@@ -1,96 +1,66 @@
+# AGENTS.md — Codex adapter for agentic-stack
 
-# Project Instructions
+Codex reads `AGENTS.md` before doing any work. This file points it at
+the portable brain in `.agent/`. Claude Code loads the same content via
+`CLAUDE.md` (`@AGENTS.md`).
 
-This project uses the **agentic-stack** portable brain. All memory, skills,
-and protocols live in `.agent/`.
+> **Python invocation**: examples below use `python3`. On stock Windows
+> only `python` is on PATH; use whichever resolves on your system.
 
-## Session start — read in this order
-1. `.agent/AGENTS.md` — the map of the whole brain
-2. `.agent/memory/personal/PREFERENCES.md` — how the user works
-3. `.agent/memory/working/REVIEW_QUEUE.md` — pending lessons awaiting review
-4. `.agent/memory/semantic/LESSONS.md` — what we've already learned
-5. `.agent/protocols/permissions.md` — hard constraints, read before any tool call
+## Startup (read in order)
+1. `.agent/AGENTS.md` — the map
+2. `.agent/memory/personal/PREFERENCES.md` — user conventions
+3. `.agent/memory/working/REVIEW_QUEUE.md` — pending candidate lessons
+4. `.agent/memory/semantic/LESSONS.md` — distilled lessons
+5. `.agent/protocols/permissions.md` — hard rules
 
-## Before every non-trivial action — recall first
+If `REVIEW_QUEUE.md` shows pending > 10 or oldest staged > 7 days, review
+candidates before substantive work.
 
-For any task involving **deploy**, **ship**, **release**, **migration**,
-**schema change**, **supabase**, **edge function**, **timestamp** /
-**timezone** / **date**, **failing test**, **debug**, **investigate**, or
-**refactor**, run recall FIRST and present the results before acting:
+## Skills
+Codex scans `.agents/skills/` for repository-scoped skills (per
+[OpenAI Codex docs](https://developers.openai.com/codex/skills)). The
+install script symlinks or syncs `.agents/skills` from `.agent/skills`
+so the portable brain remains the one source of truth. Load a full
+`SKILL.md` only when its triggers match the task (progressive
+disclosure). Edit skills in `.agent/skills/` — `.agents/skills/` is a
+mirror and re-running the installer will sync it back.
+
+Read `.agent/skills/_index.md` first. Current registry includes
+`git-proxy`, `debug-investigator`, `deploy-checklist`, `memory-manager`,
+`skillforge`, `data-layer`, `data-flywheel`, `brain`, `design-md`, and
+`tldraw`.
+
+## Recall before non-trivial tasks
+For deploy / ship / release / migration / schema / timestamp / timezone /
+date / failing test / debug / investigate / refactor, FIRST run:
 
 ```bash
-python3 .agent/tools/recall.py "<one-line description of what you're about to do>"
+python3 .agent/tools/recall.py "<description>"
 ```
 
-Show the output in a `Consulted lessons before acting:` block. If a surfaced
-lesson would be violated by your intended action, stop and explain why.
+Surface results in a `Consulted lessons before acting:` block and follow
+them. If a surfaced lesson would be violated by the intended action, stop
+and explain why.
 
-## While working
-
-### Skills
-Read `.agent/skills/_index.md` and load the full `SKILL.md` for any skill
-whose triggers match the task. Don't skip this — skills carry constraints
-the permissions file doesn't cover.
-
-### Workspace
-Update `.agent/memory/working/WORKSPACE.md` when:
-- You start a new task (write the goal and first step)
-- Your hypothesis changes
-- You complete or abandon a task (clear it so the next session is clean)
-
-### Brain state
-Quick overview any time:
-```bash
-python3 .agent/tools/show.py
-```
-
-### Teaching the agent a new rule
-When you discover something that should never happen again:
-```bash
-python3 .agent/tools/learn.py "<the rule, phrased as a principle>" \
-    --rationale "<why — include the incident that taught you this>"
-```
-
-## Manual memory logging — when and how
-
-The PostToolUse hook captures every tool call automatically, but its
-reflections are mechanical. For **significant events** you must call
-`memory_reflect.py` explicitly with a rich `--note`. These are the entries
-the dream cycle promotes into lessons.
+## Memory discipline
+- Update `.agent/memory/working/WORKSPACE.md` as you work (goal + next
+  step on start; clear on complete/abandon).
+- After significant actions, run
+  `python3 .agent/tools/memory_reflect.py <skill> <action> <outcome>`
+  with a rich `--note` (these are what the dream cycle promotes).
+- Never delete memory entries; archive only.
+- Never hand-edit `.agent/memory/semantic/LESSONS.md` — use
+  `graduate.py` / `reject.py` / `retract_lesson.py`.
+- Quick state: `python3 .agent/tools/show.py`.
+- Teach a rule in one shot:
+  `python3 .agent/tools/learn.py "<rule>" --rationale "<why>"`.
 
 ### When to log manually
-- After completing a major feature or fixing a bug that took real investigation
-- After any rollback, incident, or unexpected failure
-- After any architectural decision (why you chose approach A over B)
-- After discovering a project-specific constraint (e.g. "this table has a
-  trigger that fires on every insert — don't bulk insert")
-- After a Supabase migration, RLS policy change, or edge function deploy
-- Any time you think "I wish I had known this an hour ago"
-
-### How to write a good entry
-
-```bash
-# Good: specific, domain-rich, future-oriented
-python3 .agent/tools/memory_reflect.py \
-    "supabase-migration" \
-    "applied add_user_tier_column migration" \
-    "migration succeeded; 847 rows backfilled to tier=free" \
-    --importance 8 \
-    --note "RLS policy on user_profiles must be updated whenever a new column is added that affects row visibility. Missed this, caused 401s in staging for 20 minutes."
-
-# Good: failure with root cause
-python3 .agent/tools/memory_reflect.py \
-    "edge-function" \
-    "deployed notify-on-signup" \
-    "deploy failed: missing RESEND_API_KEY in production env" \
-    --fail \
-    --importance 9 \
-    --note "Production env vars for edge functions must be set in supabase secrets, not .env. The .env file is ignored at deploy time."
-
-# Bad: vague, no content words for clustering
-python3 .agent/tools/memory_reflect.py \
-    "claude-code" "did stuff" "ok" --importance 3
-```
+- Major feature or bug fix that took real investigation
+- Rollback, incident, or unexpected failure
+- Architectural decision (why A over B)
+- Project-specific constraint you wish you had known earlier
 
 ### Importance guide
 | Value | When |
@@ -100,10 +70,120 @@ python3 .agent/tools/memory_reflect.py \
 | 5–6 | Refactor, significant bug fix, API contract change |
 | 3–4 | Routine edit, file creation, test run |
 
-## Rules that override all defaults
-- Never force push to `main`, `production`, or `staging`.
-- Never delete episodic or semantic memory entries — archive them.
-- Never modify `.agent/protocols/permissions.md` — only humans edit it.
-- Never hand-edit `.agent/memory/semantic/LESSONS.md` — use `graduate.py`.
-- If `REVIEW_QUEUE.md` shows pending > 10 or oldest > 7 days, review
-  candidates before starting substantive work.
+## Hard rules
+- No force push to `main`, `production`, `staging`.
+- No modification of `.agent/protocols/permissions.md` (humans only).
+- No deleting episodic or semantic memory entries — archive only.
+- Follow `.agent/protocols/permissions.md` for approval gates (deploy,
+  migrations, dependency installs, CI changes, etc.).
+
+## Working principles
+
+*These bias toward caution over speed. Use judgment for trivial tasks.*
+
+### Investigate first
+
+- **Read before writing:** Before adding code in a file, read its exports,
+  the immediate caller, and obvious shared utilities. Match existing
+  patterns; never guess. If you don't understand why existing code is
+  structured the way it is, ask before adding to it.
+- **Think before coding:** State assumptions explicitly; ask when
+  uncertain. If multiple interpretations exist, present them (don't pick
+  silently). If a simpler approach exists, say so. Push back when
+  warranted.
+- **Set verifiable goals:** Transform tasks into pass/fail criteria before
+  starting. Weak criteria require constant clarification; strong criteria
+  let you loop independently.
+- **Surface conflicts, don't average them:** If two existing patterns
+  contradict, don't blend them. Pick one (more recent / more tested),
+  explain why, flag the other for cleanup.
+- **Activate skills:** Scan `.agent/skills/_index.md` and load every
+  relevant `SKILL.md`. Trigger on the *task* (e.g. `git-proxy` for
+  commits/PRs, `debug-investigator` for bugs, `deploy-checklist` before
+  ship). Missing a skill is a common source of convention violations.
+
+### Write minimum
+
+- **Simplicity first:** Minimum code that solves the problem. No features
+  beyond what was asked, no abstractions for single-use code, no
+  "flexibility" that wasn't requested, no error handling for impossible
+  scenarios.
+- **Surgical changes:** Every changed line traces directly to the request.
+  Don't refactor or "improve" adjacent code; match existing style even if
+  you'd do it differently. Remove imports/variables your changes orphaned;
+  don't touch pre-existing dead code (mention it).
+- **No obsolete paths by default:** During active product iteration, remove
+  old behavior and state instead of preserving transitional fallbacks
+  unless explicitly requested.
+- **Fix root causes**, not symptoms.
+- **Composability:** Build simple, extensible primitives and compose them.
+  Avoid bespoke monoliths.
+
+### Verify honestly
+
+- **Tests verify intent, not behavior:** Every test must encode WHY the
+  behavior matters, not just WHAT it does. If a test wouldn't fail when
+  business logic changes, the function or the test is wrong.
+- **Bug fixes require regression tests:** Every bug fix must add or update
+  tests that fail for the bug and pass for the fix. If an automated
+  regression test is impossible, explain why and document the manual
+  verification used.
+- **Fail loud:** Surface uncertainty rather than hiding it. "Tests pass" is
+  wrong if you skipped any. "Feature works" is wrong if you didn't verify
+  the edge case asked about.
+
+## Project conventions (pdfindex)
+
+Python package for hierarchical PDF indexing (Claude/Codex structured
+completions, not vector chunking). Package root: `pdfindex/`. Tests:
+`tests/`. Tooling: `uv` + Ruff + `ty` + pytest.
+
+### Python / typing
+- Target Python 3.10+; prefer `from __future__ import annotations`.
+- Prefer Pydantic models and explicit types over ad-hoc dicts at
+  boundaries (schemas, settings, completion payloads).
+- Avoid `# type: ignore` and broad `Any` unless unavoidable; fix the type.
+
+### Style
+- Ruff owns format + lint (`pyproject.toml`: line length 100, indent 2,
+  single quotes). Match existing modules.
+- Module docstrings on packages/modules; function docstrings describe the
+  caller contract (Args/Returns), not the implementation. Inline comments
+  explain non-obvious WHY only — no section-divider comments.
+- Logging: Loguru only (`from loguru import logger`). Configure via
+  `pdfindex.logging_config.configure_logging()`. Brace-format messages;
+  use `bind()` for structured context. No stdlib `logging` in app code.
+
+### Layout
+- Application code under `pdfindex/`; tests under top-level `tests/` (not
+  next to source).
+- Named exports / clear module APIs; reuse existing types from sibling
+  modules instead of redefining them.
+
+### Subagents
+Follow `.agent/protocols/delegation.md`. For non-trivial work: bucket into
+independent sub-tasks, brief each subagent fully (fresh context), and
+synthesize conflicts in the parent. Do not fan out without a clear return
+format and budget.
+
+### Pull requests
+Write for a tired reviewer who should know what the PR does in five
+seconds. Prefer conventional-commit titles (`type(scope): summary`) and
+imperative phrasing. Description: one sentence of what/why, then bullets.
+Validation lists only commands you actually ran. No filler, invented
+diff stats, or AI tells. Use `git-proxy` for git safety.
+
+## Verification
+
+Before claiming work complete (and before commit/push when changes warrant
+it), run the same checks as CI:
+
+```bash
+uv run ruff format --check pdfindex tests
+uv run ruff check pdfindex tests
+uv run ty check pdfindex tests
+uv run pytest -q
+```
+
+Scoped subsets while iterating: `uv run ruff check …`, `uv run ty check …`,
+`uv run pytest …`.
