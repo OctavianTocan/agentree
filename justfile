@@ -1,5 +1,5 @@
 example:
-  uv run main.py --pdf_path "PageIndex/examples/documents/2023-annual-report.pdf"
+  uv run main.py --pdf_path "examples/documents/2023-annual-report.pdf"
 
 fmt:
   uv run ruff format PDFindex main.py tests

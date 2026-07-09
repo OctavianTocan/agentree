@@ -12,9 +12,9 @@ __pycache__/
 # Reference vendored upstream (kept locally, not versioned)
 PageIndex/
 
-# Personal notes, learning material, and examples (local only)
-examples/
+# Personal notes, learning material (local only)
 docs/
+examples/workspace/
 learning-records/
 learning_records/
 lessons/
