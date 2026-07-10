@@ -15,6 +15,7 @@ CHECK_PAGE_FOR_TOC_PROMPT = """
     You should NOT call any tools for this task.
     """
 
+# @todo: This, again, isn't quite a tree structure, no?
 GENERATE_TREE_STRUCTURE_INITIAL_PROMPT = """
     You are an expert in extracting hierarchical tree structure, your task is to generate the tree structure of the document.
 
@@ -24,8 +25,7 @@ GENERATE_TREE_STRUCTURE_INITIAL_PROMPT = """
 
     The provided text contains tags like <physical_index_X> and <physical_index_X> to indicate the start and end of page X.
 
-    For the physical_index, you need to extract the physical index of the start of the section from the text. Keep the <physical_index_X> format.
-
+    For the physical_index, you need to extract the physical index of the start of the section from the text, and set `physical_index` to the integer `X` (e.g `2`, not `<physical_index_2>`).
 
     Directly return the final JSON structure. Do not output anything else.
     You should NOT call any tools for this task."""
@@ -41,7 +41,7 @@ GENERATE_TREE_STRUCTURE_CONTINUATION_PROMPT = """
 
     The provided text contains tags like <physical_index_X> and <physical_index_X> to indicate the start and end of page X. \
 
-    For the physical_index, you need to extract the physical index of the start of the section from the text. Keep the <physical_index_X> format.
+    For the physical_index, you need to extract the physical index of the start of the section from the text, and set `physical_index` to the integer `X` (e.g `2`, not `<physical_index_2>`).
 
     Directly return only the additional sections found in the current part - do not repeat sections already present in the previous tree structure. Do not output anything else.
     You should NOT call any tools for this task."""

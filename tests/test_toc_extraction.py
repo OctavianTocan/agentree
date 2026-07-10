@@ -46,7 +46,7 @@ def test_generate_toc_initial_structure_finds_overview_section():
 def test_generate_toc_continuation_structure_finds_new_section_not_in_previous():
   client = create_completion_client('claude')
   previous_structure = [
-    TreeStructure(structure='1', title='Overview', physical_index='<physical_index_2>'),
+    TreeStructure(structure='1', title='Overview', physical_index=2),
     TreeStructure(structure='2', title='Methods', physical_index=None),
   ]
 

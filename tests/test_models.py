@@ -38,7 +38,7 @@ def test_tree_structure_physical_index_defaults_to_none():
 def test_tree_structure_list_round_trips_through_json():
   sections = TreeStructureList(
     sections=[
-      TreeStructure(structure='1', title='Overview', physical_index='<physical_index_7>'),
+      TreeStructure(structure='1', title='Overview', physical_index=7),
       TreeStructure(structure='2', title='Methods', physical_index=None),
     ]
   )

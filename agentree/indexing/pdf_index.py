@@ -76,6 +76,7 @@ def index(pdf_path: str) -> list[TreeStructure]:
       TreeStructureList(sections=document_structure).model_dump_json(indent=2),
     )
 
+    # Add all the continuation chunks to the document structure.
     for chunk in chunk_pages[1:]:
       continuation_structure = asyncio.run(
         generate_toc_continuation_structure(chunk.content, document_structure)
@@ -85,6 +86,9 @@ def index(pdf_path: str) -> list[TreeStructure]:
         TreeStructureList(sections=continuation_structure).model_dump_json(indent=2),
       )
       document_structure.extend(continuation_structure)
+
+    # Build the document node tree.
+    # document_node_tree = build_document_node_tree(document_structure)
 
   # TODO: After either branch, assemble Tree via build_document_node_tree,
   # generate doc_description, and return Tree (+ pages) instead of this flat list.
@@ -162,7 +166,7 @@ def count_tokens(text: str) -> int:
 # codes, assign zero-padded node_id. PageIndex refs: post_processing,
 # list_to_tree, write_node_id (utils.py). Then optionally generate
 # doc_description (one LLM call over the text-stripped tree).
-async def build_document_node_tree(page_list):
+async def build_document_node_tree(document_structure: list[TreeStructure]):
   """Placeholder for building the final Node/Tree structure. Not yet implemented."""
   ...
 

@@ -85,6 +85,7 @@ class PageChunk(BaseModel):
   content: str = Field(description='The content of the chunk.')
 
 
+# @todo: Should this not be renamed to 'Chunk' or 'Section' or so? It's representing that, no?
 class TreeStructure(StrictModel):
   """One section of a document's table of contents, as extracted by the model."""
 
@@ -92,11 +93,11 @@ class TreeStructure(StrictModel):
     description='The structure index of the hierarchy section in the table of contents.'
   )
   title: str = Field(description='The title of the section.')
-  physical_index: str | None = Field(
+  physical_index: int | None = Field(
     default=None,
     description=(
-      'The physical index of the start of the section, or null if it '
-      "doesn't start in the given text."
+      '1-indexed physical page number where this section starts, taken from the'
+      '`<physical_index_N>` tags in the input text. null if it does not start in this chunk.'
     ),
   )
 
