@@ -1,7 +1,7 @@
 """No-op completion client used when AI completions are disabled."""
 
 from agentree.completion.protocol import StructuredCompletionClient
-from agentree.models import BoolModel, TreeStructureList
+from agentree.models import BoolModel, OutlineSectionList
 from agentree.types.completion import ResponseModel
 
 
@@ -18,6 +18,6 @@ class DisabledCompletionClient(StructuredCompletionClient):
     """Return an empty instance of `response_model` without calling a provider."""
     if response_model is BoolModel:
       return response_model(value=False)
-    if response_model is TreeStructureList:
+    if response_model is OutlineSectionList:
       return response_model(sections=[])
     raise TypeError(f'No disabled default for response model: {response_model!r}')

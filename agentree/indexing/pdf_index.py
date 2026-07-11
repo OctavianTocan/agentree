@@ -2,6 +2,7 @@
 
 import asyncio
 import math
+from pathlib import Path
 
 from loguru import logger
 from pypdf import PdfReader
@@ -9,10 +10,10 @@ from pypdf import PdfReader
 from agentree.config import settings
 from agentree.indexing.toc_extraction import (
   check_page_for_toc,
-  generate_toc_continuation_structure,
-  generate_toc_initial_structure,
+  extract_outline_continuation,
+  extract_outline_initial,
 )
-from agentree.models import Page, PageChunk, TreeStructure, TreeStructureList
+from agentree.models import Document, OutlineSection, OutlineSectionList, Page, PageChunk, Tree
 
 # The maximum number of tokens per chunk.
 MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
@@ -22,8 +23,8 @@ TOP_CHECK_PAGE_NUM = settings.top_check_page_num
 
 # TODO: Change return type to Tree (nested Node tree + doc_description), and
 # also surface per-page text so storage / get_page_content can persist it.
-# Today we only return a flat list[TreeStructure]; see TODO.md "Flat → nested Tree".
-def index(pdf_path: str) -> list[TreeStructure]:
+# Today we only return a flat list[OutlineSection]; see TODO.md "Flat → nested Tree".
+def index(pdf_path: str) -> list[OutlineSection]:
   """Index a PDF file with no table of contents into a flat list of sections.
 
   Args:
@@ -33,24 +34,17 @@ def index(pdf_path: str) -> list[TreeStructure]:
       Sections found across the whole document, in document order.
 
   """
-  # The final structure of the document.
-  document_structure: list[TreeStructure] = []
-
-  # Extract the text and tokens from the PDF file.
-  page_list: list[tuple[str, int]] = extract_text_and_tokens(pdf_path)
+  outline: list[OutlineSection] = []
+  doc = load_document(pdf_path)
 
   logger.bind(
-    total_page_number=len(page_list),
-    total_token=sum(page[1] for page in page_list),
-  ).info('Extracted PDF pages')
-
-  # TODO: Why do we have this, aside from the page_list that we already have? Odd.
-  raw_pages: list[Page] = [
-    Page(content=text, tokens=token_count) for text, token_count in page_list
-  ]
+    doc_name=doc.name,
+    total_page_number=doc.last_page,
+    total_token=sum(page.tokens for page in doc.pages),
+  ).info('Loaded PDF document')
 
   # Check if the document has a table of contents.
-  toc_pages: list[tuple[int, Page]] = find_toc_pages(raw_pages)
+  toc_pages: list[tuple[int, Page]] = find_toc_pages(doc.pages)
 
   # --- DOCUMENT INDEXING WITH TABLE OF CONTENTS --- #
   if toc_pages:
@@ -60,39 +54,44 @@ def index(pdf_path: str) -> list[TreeStructure]:
     #   2. Ask the LLM for structured JSON directly (no toc_transformer loop).
     #   3. Map TOC entries → physical PDF page indices (simple mapping first;
     #      PageIndex offset/verify cascade is deferred — see TODO.md).
-    #   4. Assign document_structure from that result, then fall through to
+    #   4. Assign outline from that result, then fall through to
     #      flat→Tree assembly below (same as the no-TOC path).
     ...
   # --- DOCUMENT INDEXING WITHOUT TABLE OF CONTENTS --- #
   else:
-    pages: list[Page] = process(page_list)
     # Chunk the pages into chunks with overlap between them.
-    chunk_pages: list[PageChunk] = chunk_pages_with_overlap(pages)
+    chunk_pages: list[PageChunk] = chunk_pages_with_overlap(doc.pages)
     logger.bind(chunk_count=len(chunk_pages)).info('Chunked pages for indexing')
 
-    document_structure = asyncio.run(generate_toc_initial_structure(chunk_pages[0].content))
+    outline = asyncio.run(extract_outline_initial(chunk_pages[0].content))
     logger.info(
-      'initial_structure:\n{}',
-      TreeStructureList(sections=document_structure).model_dump_json(indent=2),
+      'initial_outline:\n{}',
+      OutlineSectionList(sections=outline).model_dump_json(indent=2),
     )
 
-    # Add all the continuation chunks to the document structure.
+    # Add all the continuation chunks to the outline.
     for chunk in chunk_pages[1:]:
-      continuation_structure = asyncio.run(
-        generate_toc_continuation_structure(chunk.content, document_structure)
-      )
+      continuation = asyncio.run(extract_outline_continuation(chunk.content, outline))
       logger.info(
-        'continuation_structure:\n{}',
-        TreeStructureList(sections=continuation_structure).model_dump_json(indent=2),
+        'continuation_outline:\n{}',
+        OutlineSectionList(sections=continuation).model_dump_json(indent=2),
       )
-      document_structure.extend(continuation_structure)
+      outline.extend(continuation)
 
-    # Build the document node tree.
-    # document_node_tree = build_document_node_tree(document_structure)
+    # Assemble the nested Tree.
+    # tree = assemble_tree(outline, doc)
 
-  # TODO: After either branch, assemble Tree via build_document_node_tree,
-  # generate doc_description, and return Tree (+ pages) instead of this flat list.
-  return document_structure
+  # TODO: After either branch, assemble Tree via assemble_tree(outline, doc),
+  # generate doc_description, and return Tree (+ doc.pages) instead of this flat list.
+  return outline
+
+
+def load_document(pdf_path: str | Path) -> Document:
+  """Read a PDF, tag physical page indices, and return an immutable Document bag."""
+  path = Path(pdf_path)
+  raw_pages = extract_text_and_tokens(path)
+  pages = tag_physical_indices(raw_pages)
+  return Document.from_pages(path, pages)
 
 
 def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
@@ -129,7 +128,7 @@ def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
   return toc_pages
 
 
-def extract_text_and_tokens(pdf_path: str) -> list[tuple[str, int]]:
+def extract_text_and_tokens(pdf_path: str | Path) -> list[tuple[str, int]]:
   """Read every page of a PDF and estimate its token count.
 
   Args:
@@ -139,9 +138,10 @@ def extract_text_and_tokens(pdf_path: str) -> list[tuple[str, int]]:
       One (page_text, token_count) tuple per page, in page order.
 
   """
-  logger.bind(pdf_path=pdf_path).info('Reading PDF')
+  path = Path(pdf_path)
+  logger.bind(pdf_path=str(path)).info('Reading PDF')
   page_list = []
-  reader = PdfReader(pdf_path)
+  reader = PdfReader(path)
   number_of_pages = len(reader.pages)
 
   # Add all pages to the page list.
@@ -161,19 +161,24 @@ def count_tokens(text: str) -> int:
   return len(text) // 4
 
 
-# TODO: Implement flat list[TreeStructure] → nested Tree/Node assembly:
+# TODO: Implement OutlineSection → FlatSection → Node → Tree assembly:
 # derive end_index from the next section's start, nest via dotted `structure`
 # codes, assign zero-padded node_id. PageIndex refs: post_processing,
 # list_to_tree, write_node_id (utils.py). Then optionally generate
 # doc_description (one LLM call over the text-stripped tree).
-async def build_document_node_tree(document_structure: list[TreeStructure]):
-  """Placeholder for building the final Node/Tree structure. Not yet implemented."""
-  ...
+def assemble_tree(outline: list[OutlineSection], doc: Document) -> Tree:
+  """Assemble a nested Tree from a flat draft outline and PDF Document facts.
+
+  Uses ``doc.name`` for ``Tree.doc_name`` and ``doc.last_page`` for the final
+  section's ``end_index``. Not yet implemented.
+  """
+  del outline, doc
+  raise NotImplementedError('assemble_tree is not implemented yet')
 
 
 # TODO: Couldn't this just be done in the extract_text_and_tokens function?
 # Seems kinda silly to do it here.
-def process(raw_pages: list[tuple[str, int]], start_index: int = 1) -> list[Page]:
+def tag_physical_indices(raw_pages: list[tuple[str, int]], start_index: int = 1) -> list[Page]:
   """Tag each page with its physical index and return tagged Page objects.
 
   Args:

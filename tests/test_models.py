@@ -1,4 +1,15 @@
-from agentree.models import Node, Tree, TreeStructure, TreeStructureList
+import pytest
+from pydantic import ValidationError
+
+from agentree.models import (
+  Document,
+  FlatSection,
+  Node,
+  OutlineSection,
+  OutlineSectionList,
+  Page,
+  Tree,
+)
 
 
 def test_tree_round_trips_through_json():
@@ -29,20 +40,35 @@ def test_leaf_node_defaults_to_no_children():
   assert node.nodes == []
 
 
-def test_tree_structure_physical_index_defaults_to_none():
-  section = TreeStructure(structure='1', title='Overview')
+def test_outline_section_physical_index_defaults_to_none():
+  section = OutlineSection(structure='1', title='Overview')
 
   assert section.physical_index is None
 
 
-def test_tree_structure_list_round_trips_through_json():
-  sections = TreeStructureList(
+def test_outline_section_list_round_trips_through_json():
+  sections = OutlineSectionList(
     sections=[
-      TreeStructure(structure='1', title='Overview', physical_index=7),
-      TreeStructure(structure='2', title='Methods', physical_index=None),
+      OutlineSection(structure='1', title='Overview', physical_index=7),
+      OutlineSection(structure='2', title='Methods', physical_index=None),
     ]
   )
 
-  round_tripped = TreeStructureList.model_validate_json(sections.model_dump_json())
+  round_tripped = OutlineSectionList.model_validate_json(sections.model_dump_json())
 
   assert round_tripped == sections
+
+
+def test_flat_section_has_page_range():
+  section = FlatSection(structure='1', title='Results', start_index=1, end_index=1)
+
+  assert section.start_index == 1
+  assert section.end_index == 1
+
+
+def test_document_is_frozen():
+  doc = Document.from_pages('a.pdf', [Page(content='x', tokens=1)])
+
+  assert doc.model_config['frozen'] is True
+  with pytest.raises(ValidationError):
+    doc.__setattr__('name', 'other.pdf')

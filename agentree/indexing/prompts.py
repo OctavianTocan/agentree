@@ -1,4 +1,4 @@
-"""System prompts for the no-TOC tree-structure extraction task."""
+"""System prompts for no-TOC outline extraction."""
 
 # TODO: Add prompts for the TOC-found path and doc_description:
 #   - EXTRACT_TOC_CONTENT / TOC_TO_STRUCTURE (direct JSON; no continuation loop)
@@ -15,8 +15,7 @@ CHECK_PAGE_FOR_TOC_PROMPT = """
     You should NOT call any tools for this task.
     """
 
-# @todo: This, again, isn't quite a tree structure, no?
-GENERATE_TREE_STRUCTURE_INITIAL_PROMPT = """
+EXTRACT_OUTLINE_INITIAL_PROMPT = """
     You are an expert in extracting hierarchical tree structure, your task is to generate the tree structure of the document.
 
     The structure variable is the numeric system which represents the index of the hierarchy section in the table of contents. For example, the first section has structure index 1, the first subsection has structure index 1.1, the second subsection has structure index 1.2, etc.
@@ -30,7 +29,7 @@ GENERATE_TREE_STRUCTURE_INITIAL_PROMPT = """
     Directly return the final JSON structure. Do not output anything else.
     You should NOT call any tools for this task."""
 
-GENERATE_TREE_STRUCTURE_CONTINUATION_PROMPT = """
+EXTRACT_OUTLINE_CONTINUATION_PROMPT = """
     You are an expert in extracting hierarchical tree structure.
     You are given a tree structure of the previous part and the text of the current part.
     Your task is to continue the tree structure from the previous part to include the current part.

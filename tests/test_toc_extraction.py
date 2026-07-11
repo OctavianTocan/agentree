@@ -2,10 +2,10 @@ import asyncio
 
 from agentree.completion import create_completion_client
 from agentree.indexing.toc_extraction import (
-  generate_toc_continuation_structure,
-  generate_toc_initial_structure,
+  extract_outline_continuation,
+  extract_outline_initial,
 )
-from agentree.models import TreeStructure
+from agentree.models import OutlineSection
 from tests.conftest import requires_live_claude
 
 FIRST_CHUNK = """<physical_index_1>
@@ -34,24 +34,24 @@ This section describes our results.
 
 
 @requires_live_claude
-def test_generate_toc_initial_structure_finds_overview_section():
+def test_extract_outline_initial_finds_overview_section():
   client = create_completion_client('claude')
-  sections = asyncio.run(generate_toc_initial_structure(FIRST_CHUNK, client=client))
+  sections = asyncio.run(extract_outline_initial(FIRST_CHUNK, client=client))
 
   assert any(section.title.strip().lower() == 'overview' for section in sections)
-  assert all(isinstance(section, TreeStructure) for section in sections)
+  assert all(isinstance(section, OutlineSection) for section in sections)
 
 
 @requires_live_claude
-def test_generate_toc_continuation_structure_finds_new_section_not_in_previous():
+def test_extract_outline_continuation_finds_new_section_not_in_previous():
   client = create_completion_client('claude')
-  previous_structure = [
-    TreeStructure(structure='1', title='Overview', physical_index=2),
-    TreeStructure(structure='2', title='Methods', physical_index=None),
+  previous_outline = [
+    OutlineSection(structure='1', title='Overview', physical_index=2),
+    OutlineSection(structure='2', title='Methods', physical_index=None),
   ]
 
   new_sections = asyncio.run(
-    generate_toc_continuation_structure(SECOND_CHUNK, previous_structure, client=client)
+    extract_outline_continuation(SECOND_CHUNK, previous_outline, client=client)
   )
 
   assert any(section.title.strip().lower() == 'results' for section in new_sections)
