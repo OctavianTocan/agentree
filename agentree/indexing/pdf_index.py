@@ -81,13 +81,17 @@ def index(pdf_path: str) -> list[OutlineSection]:
     # Assemble the nested Tree.
     # tree = assemble_tree(outline, doc)
 
-  # TODO: After either branch, assemble Tree via assemble_tree(outline, doc),
-  # generate doc_description, and return Tree (+ doc.pages) instead of this flat list.
+  # TODO: After either branch, assemble Tree via assemble_tree(outline, doc)
+  # (pure helpers in indexing/assemble.py — see TODO.md), generate
+  # doc_description, and return Tree (+ doc.pages) instead of this flat list.
   return outline
 
 
 def load_document(pdf_path: str | Path) -> Document:
   """Read a PDF, tag physical page indices, and return an immutable Document bag."""
+  # TODO: Delegate to Document.load(pdf_path) once that factory exists
+  # (TODO.md "Document.load factory"). This wrapper can then shrink to one
+  # line or be deleted; call sites should prefer Document.load.
   path = Path(pdf_path)
   raw_pages = extract_text_and_tokens(path)
   pages = tag_physical_indices(raw_pages)
@@ -161,11 +165,19 @@ def count_tokens(text: str) -> int:
   return len(text) // 4
 
 
-# TODO: Implement OutlineSection → FlatSection → Node → Tree assembly:
-# derive end_index from the next section's start, nest via dotted `structure`
-# codes, assign zero-padded node_id. PageIndex refs: post_processing,
-# list_to_tree, write_node_id (utils.py). Then optionally generate
-# doc_description (one LLM call over the text-stripped tree).
+# TODO: Split assembly into pure functions in agentree/indexing/assemble.py
+# (see TODO.md):
+#   1. outline_to_flat_sections(outline, *, last_page) -> list[FlatSection]
+#      end = next.start - 1; last section → last_page; fail loud if
+#      physical_index is None. No appear_start in v1. Unit-test fixtures only.
+#   2. flat_sections_to_nodes(flat) -> list[Node]
+#      nest by dotted structure; assign zero-padded node_id. Unit-test with
+#      hand-built FlatSections.
+#   3. assemble_tree below becomes a thin orchestrator:
+#      flat = outline_to_flat_sections(...); nodes = flat_sections_to_nodes(...);
+#      return Tree(doc_name=doc.name, structure=nodes)
+# PageIndex refs: post_processing (ranges), list_to_tree, write_node_id.
+# Then wire assemble_tree from index() (TODO.md "Wire assemble_tree + index()").
 def assemble_tree(outline: list[OutlineSection], doc: Document) -> Tree:
   """Assemble a nested Tree from a flat draft outline and PDF Document facts.
 
@@ -176,8 +188,9 @@ def assemble_tree(outline: list[OutlineSection], doc: Document) -> Tree:
   raise NotImplementedError('assemble_tree is not implemented yet')
 
 
-# TODO: Couldn't this just be done in the extract_text_and_tokens function?
-# Seems kinda silly to do it here.
+# TODO: Keep this pure and module-level for unit tests (tests/test_process.py).
+# Document.load / load_document should call it — do not fold tagging into a
+# mutating Document method. May move to indexing/pdf_io.py with extract helpers.
 def tag_physical_indices(raw_pages: list[tuple[str, int]], start_index: int = 1) -> list[Page]:
   """Tag each page with its physical index and return tagged Page objects.
 

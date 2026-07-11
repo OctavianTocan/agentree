@@ -74,5 +74,6 @@
     "**/PageIndex": true,
     "**/.agent": true,
     "**/uv.lock": true
-  }
+  },
+  "cursorpyright.analysis.typeCheckingMode": "off"
 }

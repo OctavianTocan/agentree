@@ -40,3 +40,10 @@ class Document(BaseModel):
     """Build a Document from a path and already-tagged pages."""
     path = Path(pdf_path)
     return cls(path=path, name=path.name, pages=pages)
+
+  # TODO: Add Document.load(pdf_path) -> Document classmethod (construction
+  # factory). Should extract text, call tag_physical_indices (keep that pure
+  # and module-level), then from_pages. Prefer moving extract/tag helpers to
+  # indexing/pdf_io.py if models↔indexing import cycles appear. Do not add
+  # mutating extract/tag instance methods on this frozen bag.
+  # See TODO.md "Document.load factory".
