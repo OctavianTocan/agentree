@@ -14,26 +14,26 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
 
 - [x] **`physical_index` as int from the LLM** — keep `<physical_index_N>`
       tags in page *input* text; stop asking for tag strings in the JSON.
-      Change `TreeStructure.physical_index` to `int | None`, update both
+      Change `OutlineSection.physical_index` to `int | None`, update both
       generate-structure prompts to emit the integer `N`, fix tests that
       expect `'<physical_index_…>'`. Makes PageIndex-style
       `convert_physical_index_to_int` unnecessary for the no-TOC path.
-      (`agentree/models/schemas.py`, `indexing/prompts.py`,
+      (`agentree/models/outline.py`, `indexing/prompts.py`,
       `tests/test_toc_extraction.py`, `tests/test_models.py`)
-- [ ] **Flat → nested `Tree`** — `index()` returns `list[TreeStructure]`;
+- [ ] **Flat → nested `Tree`** — `index()` returns `list[OutlineSection]`;
       agents need `Tree` / `Node` (`start_index` / `end_index` / `node_id` /
-      nested `nodes`). Implement assembly (PageIndex:
-      `post_processing`, `list_to_tree`, `write_node_id`; skip tag→int
-      convert if the item above lands first). See
+      nested `nodes`). Implement assembly via `FlatSection` mid-stage
+      (PageIndex: `post_processing`, `list_to_tree`, `write_node_id`; skip
+      tag→int convert if the item above lands first). See
       `reference/pageindex-tree-product.md`.
-      (`agentree/indexing/pdf_index.py` → `build_document_node_tree`)
-- [ ] **Expose per-page text from `index()`** — `extract_text_and_tokens`
-      already produces pages; they never leave the function. Storage and
+      (`assemble_tree(outline, doc)` — `Document` supplies name + last_page)
+- [ ] **Expose per-page text from `index()`** — `Document.pages` already
+      holds tagged pages; they never leave `index()`. Storage and
       `get_page_content` need them. Return pages alongside the tree (or a
       small result type). (`agentree/indexing/pdf_index.py`)
 - [ ] **`doc_description`** — one LLM call over the (text-stripped) tree so
       an agent can pick this doc out of many. Field exists on `Tree`; no
-      generator yet. (`agentree/indexing/`, `models/schemas.py`; PageIndex
+      generator yet. (`agentree/indexing/`, `models/tree.py`; PageIndex
       `generate_doc_description`)
 - [ ] **Markdown/JSON corpus store (first persistence)** — thin write/read
       adapter over the `Tree` (+ pages): on-disk JSON for the machine
@@ -86,6 +86,6 @@ These exist in PageIndex; we cut/deferred them on purpose (`MISSION.md`):
 # DONE
 
 - [x] Add a CLI command that launches agentree, `agentree`.
-- [x] No-TOC flat draft extraction (chunk + init/continue → `list[TreeStructure]`).
+- [x] No-TOC flat draft extraction (chunk + init/continue → `list[OutlineSection]`).
 - [x] Document what PageIndex returns vs the draft:
       `reference/pageindex-tree-product.md`.

@@ -53,7 +53,7 @@ Agentree aims for **retrieval-as-tools**:
 | TOC page detection (leading pages) | Works |
 | No-TOC structure generation (chunked + continuation) | Works |
 | Completion providers: Claude Agent SDK, Codex SDK | Works |
-| Flat `TreeStructure` list from `index()` | Works |
+| Flat `OutlineSection` list from `index()` | Works |
 | Nested `Tree` / `node_id` / `doc_description` | Not wired yet |
 | TOC-found → structure path | Stub after detection |
 | SQLite corpus storage | Not wired |
