@@ -2,10 +2,8 @@
 
 import asyncio
 import math
-from pathlib import Path
 
 from loguru import logger
-from pypdf import PdfReader
 
 from agentree.config import settings
 from agentree.indexing.toc_extraction import (
@@ -21,10 +19,9 @@ MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
 TOP_CHECK_PAGE_NUM = settings.top_check_page_num
 
 
-# TODO: Change return type to Tree (nested Node tree + doc_description), and
-# also surface per-page text so storage / get_page_content can persist it.
+# TODO: Surface per-page text so storage / get_page_content can persist it.
 # Today we only return a flat list[OutlineSection]; see TODO.md "Flat → nested Tree".
-def index(pdf_path: str) -> list[OutlineSection]:
+def index(pdf_path: str) -> Tree:
   """Index a PDF file with no table of contents into a flat list of sections.
 
   Args:
@@ -35,7 +32,8 @@ def index(pdf_path: str) -> list[OutlineSection]:
 
   """
   outline: list[OutlineSection] = []
-  doc = load_document(pdf_path)
+  # Load the document from the PDF path.
+  doc: Document = Document.load(pdf_path)
 
   logger.bind(
     doc_name=doc.name,
@@ -78,24 +76,10 @@ def index(pdf_path: str) -> list[OutlineSection]:
       )
       outline.extend(continuation)
 
-    # Assemble the nested Tree.
-    # tree = assemble_tree(outline, doc)
-
   # TODO: After either branch, assemble Tree via assemble_tree(outline, doc)
   # (pure helpers in indexing/assemble.py — see TODO.md), generate
   # doc_description, and return Tree (+ doc.pages) instead of this flat list.
-  return outline
-
-
-def load_document(pdf_path: str | Path) -> Document:
-  """Read a PDF, tag physical page indices, and return an immutable Document bag."""
-  # TODO: Delegate to Document.load(pdf_path) once that factory exists
-  # (TODO.md "Document.load factory"). This wrapper can then shrink to one
-  # line or be deleted; call sites should prefer Document.load.
-  path = Path(pdf_path)
-  raw_pages = extract_text_and_tokens(path)
-  pages = tag_physical_indices(raw_pages)
-  return Document.from_pages(path, pages)
+  return assemble_tree(outline, doc)
 
 
 def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
@@ -132,39 +116,6 @@ def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
   return toc_pages
 
 
-def extract_text_and_tokens(pdf_path: str | Path) -> list[tuple[str, int]]:
-  """Read every page of a PDF and estimate its token count.
-
-  Args:
-      pdf_path: Path to the PDF file to read.
-
-  Returns:
-      One (page_text, token_count) tuple per page, in page order.
-
-  """
-  path = Path(pdf_path)
-  logger.bind(pdf_path=str(path)).info('Reading PDF')
-  page_list = []
-  reader = PdfReader(path)
-  number_of_pages = len(reader.pages)
-
-  # Add all pages to the page list.
-  for page_num in range(number_of_pages):
-    page = reader.pages[page_num]
-    page_text = page.extract_text()
-    # Approximate: ~4 characters per token.
-    token_length = count_tokens(page_text)
-    # Add the page text and token length to the page list.
-    page_list.append((page_text, token_length))
-
-  return page_list
-
-
-def count_tokens(text: str) -> int:
-  """Estimate a text's token count (roughly 4 characters per token)."""
-  return len(text) // 4
-
-
 # TODO: Split assembly into pure functions in agentree/indexing/assemble.py
 # (see TODO.md):
 #   1. outline_to_flat_sections(outline, *, last_page) -> list[FlatSection]
@@ -186,31 +137,6 @@ def assemble_tree(outline: list[OutlineSection], doc: Document) -> Tree:
   """
   del outline, doc
   raise NotImplementedError('assemble_tree is not implemented yet')
-
-
-# TODO: Keep this pure and module-level for unit tests (tests/test_process.py).
-# Document.load / load_document should call it — do not fold tagging into a
-# mutating Document method. May move to indexing/pdf_io.py with extract helpers.
-def tag_physical_indices(raw_pages: list[tuple[str, int]], start_index: int = 1) -> list[Page]:
-  """Tag each page with its physical index and return tagged Page objects.
-
-  Args:
-      raw_pages: Untagged `(page_text, token_count)` tuples from PDF extraction.
-      start_index: Physical index (1-indexed) of the first page in `raw_pages`.
-
-  Returns:
-      Pages whose `content` includes `<physical_index_N>` markers.
-
-  """
-  tagged_pages: list[Page] = []
-  for page_index in range(start_index, start_index + len(raw_pages)):
-    raw_text, _token_count = raw_pages[page_index - start_index]
-    page_text = f'<physical_index_{page_index}>\n{raw_text}\n<physical_index_{page_index}>\n\n'
-
-    token_count = count_tokens(page_text)
-    tagged_pages.append(Page(content=page_text, tokens=token_count))
-
-  return tagged_pages
 
 
 # TODO: Would love to use Pydantic here. That would be pretty cool.

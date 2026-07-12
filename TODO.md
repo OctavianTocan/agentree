@@ -20,7 +20,7 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
       `convert_physical_index_to_int` unnecessary for the no-TOC path.
       (`agentree/models/outline.py`, `indexing/prompts.py`,
       `tests/test_toc_extraction.py`, `tests/test_models.py`)
-- [ ] **`Document.load` factory** — move PDF extract+tag construction onto
+- [x] **`Document.load` factory** — move PDF extract+tag construction onto
       `Document.load(pdf_path) -> Document`. Keep `tag_physical_indices` as a
       pure module-level function (unit-tested). `load_document` becomes a
       thin wrapper or goes away. Prefer helpers in `indexing/pdf_io.py` if

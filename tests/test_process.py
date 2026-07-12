@@ -1,4 +1,4 @@
-from agentree.indexing.pdf_index import tag_physical_indices
+from agentree.indexing.pdf_io import tag_physical_indices
 
 
 def test_tags_each_page_with_its_physical_index():
