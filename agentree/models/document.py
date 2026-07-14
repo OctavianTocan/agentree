@@ -4,7 +4,6 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from agentree.indexing.pdf_io import extract_text_and_tokens, tag_physical_indices
 from agentree.models.pages import Page
 
 
@@ -53,6 +52,10 @@ class Document(BaseModel):
         A Document object.
 
     """
+    # Imported here rather than at module scope to avoid a models ↔ indexing
+    # import cycle (indexing.pdf_index imports back into agentree.models).
+    from agentree.indexing.pdf_io import extract_text_and_tokens, tag_physical_indices
+
     path: Path = Path(pdf_path)
     raw_pages: list[tuple[str, int]] = extract_text_and_tokens(path)
     pages: list[Page] = tag_physical_indices(raw_pages)
