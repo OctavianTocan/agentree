@@ -40,7 +40,7 @@ class Settings(BaseSettings):
   claude_max_thinking_tokens: int | None = None
 
   # The model to use for the Codex SDK.
-  codex_model: CodexModelAlias = 'gpt-5.6-luna'
+  codex_model: CodexModelAlias = 'gpt-5.5'
 
   # When true, Codex threads are not persisted (throwaway one-shot indexing turns).
   codex_ephemeral: bool = True
