@@ -3,16 +3,28 @@
 from typing import Literal
 
 ClaudeModelAlias = Literal['haiku', 'sonnet', 'opus', 'fable']
-"""Model aliases accepted by the Claude Agent SDK's `model` option."""
+"""Short model aliases accepted by the Claude Agent SDK's `model` option."""
+
+ClaudeModelId = Literal[
+  'claude-opus-4-8',
+  'claude-sonnet-5',
+  'claude-haiku-4-5-20251001',
+  'claude-fable-5',
+]
+"""Fully-qualified Claude model IDs accepted by the Claude Agent SDK's `model` option."""
 
 CompletionClientAlias = Literal['claude', 'codex']
 """Which structured-completion adapter to use at runtime."""
 
 CodexModelAlias = Literal[
-  'gpt-5.6',
+  'gpt-5.6-luna',
+  'gpt-5.6-sol',
+  'gpt-5.6-terra',
+  'gpt-5.5-pro',
   'gpt-5.5',
-  'gpt-5.4-mini',
-  'gpt-5.4',
-  'gpt-5.3-codex-spark',
+  'gpt-5.3-codex',
+  'gpt-5.2-codex',
+  'gpt-5.1-codex-max',
+  'gpt-5.1-codex-mini',
 ]
-"""Model aliases accepted by Codex SDK's `model` option."""
+"""Model slugs accepted by the Codex SDK's `model` option."""
