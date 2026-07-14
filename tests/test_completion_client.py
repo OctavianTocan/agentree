@@ -7,7 +7,7 @@ from agentree.completion.claude import ClaudeCompletionClient
 from agentree.completion.codex import CodexCompletionClient
 from agentree.completion.disabled import DisabledCompletionClient
 from agentree.config import settings
-from agentree.models import BoolModel, OutlineSectionList
+from agentree.models import BoolModel, Outline
 
 
 def test_create_completion_client_defaults_to_claude(monkeypatch):
@@ -47,9 +47,7 @@ def test_disabled_completion_client_returns_empty_structured_responses():
   client = DisabledCompletionClient()
 
   bool_result = asyncio.run(client.complete('prompt', BoolModel, system_prompt='system'))
-  sections_result = asyncio.run(
-    client.complete('prompt', OutlineSectionList, system_prompt='system')
-  )
+  sections_result = asyncio.run(client.complete('prompt', Outline, system_prompt='system'))
 
   assert bool_result == BoolModel(value=False)
-  assert sections_result == OutlineSectionList(sections=[])
+  assert sections_result == Outline(sections=[])

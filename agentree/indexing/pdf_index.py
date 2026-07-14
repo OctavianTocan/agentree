@@ -6,12 +6,15 @@ import math
 from loguru import logger
 
 from agentree.config import settings
+from agentree.indexing.assemble import flat_sections_to_nodes, outline_to_flat_sections
 from agentree.indexing.toc_extraction import (
   check_page_for_toc,
   extract_outline_continuation,
   extract_outline_initial,
 )
-from agentree.models import Document, OutlineSection, OutlineSectionList, Page, PageChunk, Tree
+from agentree.models import Document, Outline, Page, PageChunk, Tree
+from agentree.models.outline import FlatSection
+from agentree.models.tree import Node
 
 # The maximum number of tokens per chunk.
 MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
@@ -19,19 +22,19 @@ MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
 TOP_CHECK_PAGE_NUM = settings.top_check_page_num
 
 
-# TODO: Surface per-page text so storage / get_page_content can persist it.
-# Today we only return a flat list[OutlineSection]; see TODO.md "Flat → nested Tree".
+# TODO: Surface per-page text (doc.pages) alongside the Tree so storage /
+# get_page_content can persist it — see TODO.md "Expose per-page text".
 def index(pdf_path: str) -> Tree:
-  """Index a PDF file with no table of contents into a flat list of sections.
+  """Index a PDF file into a nested section Tree.
 
   Args:
       pdf_path: Path to the PDF file to index.
 
   Returns:
-      Sections found across the whole document, in document order.
+      The assembled Tree of nested document sections.
 
   """
-  outline: list[OutlineSection] = []
+  outline: Outline = Outline(sections=[])
   # Load the document from the PDF path.
   doc: Document = Document.load(pdf_path)
 
@@ -64,21 +67,20 @@ def index(pdf_path: str) -> Tree:
     outline = asyncio.run(extract_outline_initial(chunk_pages[0].content))
     logger.info(
       'initial_outline:\n{}',
-      OutlineSectionList(sections=outline).model_dump_json(indent=2),
+      outline.model_dump_json(indent=2),
     )
 
     # Add all the continuation chunks to the outline.
     for chunk in chunk_pages[1:]:
-      continuation = asyncio.run(extract_outline_continuation(chunk.content, outline))
+      continuation: Outline = asyncio.run(extract_outline_continuation(chunk.content, outline))
       logger.info(
         'continuation_outline:\n{}',
-        OutlineSectionList(sections=continuation).model_dump_json(indent=2),
+        continuation.model_dump_json(indent=2),
       )
-      outline.extend(continuation)
+      outline = Outline(sections=outline.sections + continuation.sections)
 
-  # TODO: After either branch, assemble Tree via assemble_tree(outline, doc)
-  # (pure helpers in indexing/assemble.py — see TODO.md), generate
-  # doc_description, and return Tree (+ doc.pages) instead of this flat list.
+  # TODO: generate
+  # doc_description, and return Tree (+ doc.pages)
   return assemble_tree(outline, doc)
 
 
@@ -116,30 +118,19 @@ def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
   return toc_pages
 
 
-# TODO: Split assembly into pure functions in agentree/indexing/assemble.py
-# (see TODO.md):
-#   1. outline_to_flat_sections(outline, *, last_page) -> list[FlatSection]
-#      end = next.start - 1; last section → last_page; fail loud if
-#      physical_index is None. No appear_start in v1. Unit-test fixtures only.
-#   2. flat_sections_to_nodes(flat) -> list[Node]
-#      nest by dotted structure; assign zero-padded node_id. Unit-test with
-#      hand-built FlatSections.
-#   3. assemble_tree below becomes a thin orchestrator:
-#      flat = outline_to_flat_sections(...); nodes = flat_sections_to_nodes(...);
-#      return Tree(doc_name=doc.name, structure=nodes)
-# PageIndex refs: post_processing (ranges), list_to_tree, write_node_id.
-# Then wire assemble_tree from index() (TODO.md "Wire assemble_tree + index()").
-def assemble_tree(outline: list[OutlineSection], doc: Document) -> Tree:
+def assemble_tree(outline: Outline, doc: Document) -> Tree:
   """Assemble a nested Tree from a flat draft outline and PDF Document facts.
 
-  Uses ``doc.name`` for ``Tree.doc_name`` and ``doc.last_page`` for the final
-  section's ``end_index``. Not yet implemented.
+  Uses ``doc.name`` for ``doc_name`` and ``doc.last_page`` to close the final
+  section's range.
   """
-  del outline, doc
-  raise NotImplementedError('assemble_tree is not implemented yet')
+  # Convert the outline to a list of flat sections.
+  flat_sections: list[FlatSection] = outline_to_flat_sections(outline=outline, doc=doc)
+  nodes: list[Node] = flat_sections_to_nodes(flat_sections)
+  tree: Tree = Tree(doc_name=doc.name, nodes=nodes)
+  return tree
 
 
-# TODO: Would love to use Pydantic here. That would be pretty cool.
 def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[PageChunk]:
   """Group pages into token-budgeted chunks, with a small page overlap between consecutive chunks.
 
