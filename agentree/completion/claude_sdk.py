@@ -7,6 +7,7 @@ from claude_agent_sdk import (
   AssistantMessage,
   ClaudeAgentOptions,
   TextBlock,
+  ThinkingConfig,
   ToolUseBlock,
   query,
 )
@@ -47,10 +48,20 @@ DISALLOWED_TOOLS: list[str] = [
   'Skill',
 ]
 
+# A token cap can't be expressed with adaptive thinking, so fall back to a fixed
+# budget when one is set; otherwise let the model size its own thinking.
+THINKING_CONFIG: ThinkingConfig = (
+  {'type': 'enabled', 'budget_tokens': settings.claude_max_thinking_tokens}
+  if settings.claude_max_thinking_tokens is not None
+  else {'type': 'adaptive'}
+)
+
 DEFAULT_OPTIONS = ClaudeAgentOptions(
   model=settings.claude_model,
+  fallback_model=settings.claude_fallback_model,
+  max_budget_usd=settings.claude_max_budget_usd,
   max_turns=1,
-  thinking={'type': 'adaptive'},
+  thinking=THINKING_CONFIG,
   effort=settings.claude_reasoning_effort,
   setting_sources=[],
   disallowed_tools=DISALLOWED_TOOLS,

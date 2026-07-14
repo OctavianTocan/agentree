@@ -31,11 +31,14 @@ async def generate_structured_completion(
       approval_mode=ApprovalMode.deny_all,
       personality=settings.personality,
       base_instructions=system_prompt,
+      ephemeral=settings.codex_ephemeral,
+      service_tier=settings.codex_service_tier,
     )
     result: TurnResult = await thread.run(
       input=prompt,
       effort=settings.codex_reasoning_effort,
       output_schema=response_model.model_json_schema(),
+      service_tier=settings.codex_service_tier,
     )
     logger.bind(status=str(result.status)).debug('Codex turn completed')
     if result.error is not None:

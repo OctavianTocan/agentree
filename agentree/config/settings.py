@@ -29,11 +29,27 @@ class Settings(BaseSettings):
   # The model to use for the Claude Agent SDK: a short alias or a full model ID.
   claude_model: ClaudeModelAlias | ClaudeModelId = 'haiku'
 
+  # Model the Claude client retries with on overload/capacity errors (None to disable).
+  claude_fallback_model: ClaudeModelAlias | ClaudeModelId | None = None
+
+  # Hard USD ceiling per Claude query (None for no cap).
+  claude_max_budget_usd: float | None = None
+
+  # Cap on thinking tokens per Claude query; when set, thinking switches from
+  # adaptive to a fixed budget so the cap is honored (None for adaptive).
+  claude_max_thinking_tokens: int | None = None
+
   # The model to use for the Codex SDK.
   codex_model: CodexModelAlias = 'gpt-5.6-luna'
 
+  # When true, Codex threads are not persisted (throwaway one-shot indexing turns).
+  codex_ephemeral: bool = True
+
   # The reasoning effort to use for the Codex client.
   codex_reasoning_effort: ReasoningEffort = ReasoningEffort.none
+
+  # Codex service tier (e.g. 'priority', 'flex'); None uses the model's default tier.
+  codex_service_tier: str | None = None
 
   # The reasoning effort to use for the Claude client (guides adaptive thinking depth).
   claude_reasoning_effort: EffortLevel = 'low'
