@@ -50,7 +50,8 @@ DISALLOWED_TOOLS: list[str] = [
 DEFAULT_OPTIONS = ClaudeAgentOptions(
   model=settings.claude_model,
   max_turns=1,
-  thinking={'type': 'disabled'},
+  thinking={'type': 'adaptive'},
+  effort=settings.claude_reasoning_effort,
   setting_sources=[],
   disallowed_tools=DISALLOWED_TOOLS,
 )

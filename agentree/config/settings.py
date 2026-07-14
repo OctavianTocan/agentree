@@ -2,11 +2,13 @@
 
 import os
 
+from claude_agent_sdk import EffortLevel
 from openai_codex.generated.v2_all import Personality, ReasoningEffort
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from agentree.types.aliases import (
   ClaudeModelAlias,
+  ClaudeModelId,
   CodexModelAlias,
   CompletionClientAlias,
 )
@@ -24,14 +26,17 @@ class Settings(BaseSettings):
   # When false, skip AI completions and return empty structured responses.
   completions_enabled: bool = True
 
-  # The model to use for the Claude Agent SDK. Defaults to haiku.
-  claude_model: ClaudeModelAlias = 'haiku'
+  # The model to use for the Claude Agent SDK: a short alias or a full model ID.
+  claude_model: ClaudeModelAlias | ClaudeModelId = 'haiku'
 
   # The model to use for the Codex SDK.
-  codex_model: CodexModelAlias = 'gpt-5.5'
+  codex_model: CodexModelAlias = 'gpt-5.6-luna'
 
   # The reasoning effort to use for the Codex client.
-  codex_reasoning_effort: ReasoningEffort = ReasoningEffort.medium
+  codex_reasoning_effort: ReasoningEffort = ReasoningEffort.none
+
+  # The reasoning effort to use for the Claude client (guides adaptive thinking depth).
+  claude_reasoning_effort: EffortLevel = 'low'
 
   # The personality to use for the Codex client.
   personality: Personality = Personality.pragmatic
