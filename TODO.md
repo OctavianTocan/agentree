@@ -27,17 +27,17 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
       `models` ↔ `indexing` import cycles appear. Do not make extract/tag
       mutating instance methods on the frozen bag.
       (`agentree/models/document.py`, `agentree/indexing/pdf_index.py`)
-- [ ] **`outline_to_flat_sections`** — pure: `list[OutlineSection]` +
+- [x] **`outline_to_flat_sections`** — pure: `list[OutlineSection]` +
       `last_page` → `list[FlatSection]`. Rule: `end = next.start - 1`; last
       section → `last_page`. Fail loud on missing `physical_index` (no
       PageIndex `appear_start` in v1). Unit-test with tiny fixtures (no PDF).
       Prefer `agentree/indexing/assemble.py`. PageIndex ref:
       `post_processing` (ranges half only).
-- [ ] **`flat_sections_to_nodes`** — pure: `list[FlatSection]` →
+- [x] **`flat_sections_to_nodes`** — pure: `list[FlatSection]` →
       `list[Node]`. Nest by dotted `structure` (`"1.1"` → parent `"1"`);
       assign zero-padded `node_id`. Unit-test with hand-built `FlatSection`s.
       Same `assemble.py`. PageIndex refs: `list_to_tree`, `write_node_id`.
-- [ ] **Wire `assemble_tree` + `index()`** — thin orchestrator:
+- [x] **Wire `assemble_tree` + `index()`** — thin orchestrator:
       `outline_to_flat_sections` → `flat_sections_to_nodes` →
       `Tree(doc_name=doc.name, structure=nodes)`. Call from no-TOC (and later
       TOC) path. See `reference/pageindex-tree-product.md`.
