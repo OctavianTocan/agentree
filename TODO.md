@@ -56,6 +56,49 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
       Wire CLI so indexing writes something observable. Swap in SQLite/DB
       later behind the same interface. (`agentree/cli.py`, `agentree/storage/`)
 
+## Fix the draft quality (the tree is currently wrong)
+
+A real run on `examples/documents/Regulation Best Interest_proposed rule.pdf`
+(408 pages) exposed three defects. See
+`reference/no-toc-structure-and-range-fixes.md` for the build spec + PageIndex
+code. Do these before persistence — a broken tree isn't worth storing.
+
+- [ ] **Stop letting the model author the `code`** — the model transcribes the
+      document's *native* labels (`I`, `A`, `1`, `a`, `B`…), never a dotted path
+      (0/162 sections had a dot in the sample run), and they collide (`"A"` ×4).
+      `flat_sections_to_nodes` nests by dotted prefix, so with no dots **every
+      node becomes a root — nesting is 100% dead (162 flat siblings)**. Fix:
+      have the model emit a `level` (0-based depth) instead of/alongside the
+      code; **derive** the dotted `structure` and nesting from a level-stack in
+      assembly. Robust across chunks and independent of the doc's numbering.
+      Note PageIndex asks the model for `structure` too (`page_index.py:547`
+      `generate_toc_init`), so this is us improving on it, not matching it.
+      Cross-chunk: a chunk can't know its absolute depth alone, so the
+      continuation call must show the model the outline so far — but send only
+      the **open-ancestor spine** (the rightmost path, e.g. `Respondents →
+      Broker-Dealers`), not the whole tree. Same anchoring for `level`, a
+      fraction of the tokens (also cuts the "continuation re-sends" cost below).
+      (`agentree/models/outline.py`, `indexing/prompts.py`,
+      `indexing/toc_extraction.py`, `indexing/assemble.py`)
+- [ ] **Fix `start_index > end_index` (32/162 nodes in the sample)** — the
+      `end = next.physical_index - 1` rule breaks whenever two consecutive
+      sections start on the same page (parent header + first child both on p.214
+      → `end = 213 < 214`). Adopt PageIndex's **`appear_start`**: if the next
+      section's title starts at the *top* of its page, `end = next.start - 1`;
+      otherwise the page is shared, so `end = next.start`. PageIndex uses a
+      per-section LLM call (`page_index.py:48`
+      `check_title_appearance_in_start`, consumed in `utils.py:433`
+      `post_processing`); we can likely do it **without** an extra call by
+      string-matching the title against the top of `Document.pages[start-1]`.
+      Also clamp `end = max(start, end)` as a floor. (`indexing/assemble.py`)
+- [ ] **Pre-flight cost estimate** — before the fan-out starts, log a rough `$`
+      estimate from `sum(page.tokens)` (already logged as `total_token`) × a
+      per-model price map (`$/1M` in+out). Label it a lower bound: ignores
+      output/thinking tokens, retries, the per-page TOC-detection scan, and the
+      continuation re-sends of the growing outline. Cheap insurance given the
+      no-TOC path is one call per chunk and TOC detection is one call per page.
+      (`agentree/indexing/pdf_index.py`, new `agentree/completion/pricing.py`)
+
 ## Indexing pipeline (after the product works)
 
 - [ ] **TOC-found path** — detection works; after `find_toc_pages` the branch
