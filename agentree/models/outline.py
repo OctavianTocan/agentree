@@ -9,9 +9,11 @@ class SectionRef(BaseModel):
   """Depth + title — shared by draft and ranged-flat stages."""
 
   depth: int = Field(
-    description='Depth of the section in the hierarchy, e.g. 0 for top'
-    'level, 1 for first level, 2 for second level, etc. Base it on the visual'
-    "hierarchy, not the document's own numbering."
+    description=(
+      'How deeply the section is nested: 0 for a top-level section, 1 for a subsection of '
+      'one, 2 for a subsection of that, and so on. Base it on the visual hierarchy, not on '
+      "the document's own numbering."
+    )
   )
   title: str = Field(description='Section heading text.')
 
