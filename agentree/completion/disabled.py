@@ -1,5 +1,7 @@
 """No-op completion client used when AI completions are disabled."""
 
+from typing import override
+
 from agentree.completion.protocol import StructuredCompletionClient
 from agentree.models import BoolModel, Outline
 from agentree.types.completion import ResponseModel
@@ -8,6 +10,7 @@ from agentree.types.completion import ResponseModel
 class DisabledCompletionClient(StructuredCompletionClient):
   """Returns empty structured responses without calling a model provider."""
 
+  @override
   async def complete(
     self,
     prompt: str,

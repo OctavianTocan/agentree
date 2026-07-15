@@ -1,5 +1,7 @@
 """Codex adapter for the structured completion protocol."""
 
+from typing import override
+
 from agentree.completion.protocol import StructuredCompletionClient
 from agentree.types.completion import ResponseModel
 
@@ -7,6 +9,7 @@ from agentree.types.completion import ResponseModel
 class CodexCompletionClient(StructuredCompletionClient):
   """Adapter that maps the shared API onto `completion.codex_sdk`."""
 
+  @override
   async def complete(
     self,
     prompt: str,

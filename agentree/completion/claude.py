@@ -1,6 +1,7 @@
 """Claude Agent SDK adapter for the structured completion protocol."""
 
 import dataclasses
+from typing import override
 
 from agentree.completion.protocol import StructuredCompletionClient
 from agentree.types.completion import ResponseModel
@@ -9,6 +10,7 @@ from agentree.types.completion import ResponseModel
 class ClaudeCompletionClient(StructuredCompletionClient):
   """Adapter that maps the shared API onto `completion.claude_sdk`."""
 
+  @override
   async def complete(
     self,
     prompt: str,
