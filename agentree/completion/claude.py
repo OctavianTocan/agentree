@@ -18,7 +18,12 @@ class ClaudeCompletionClient(StructuredCompletionClient):
     *,
     system_prompt: str,
   ) -> ResponseModel:
-    """Complete a prompt and return a response model."""
+    """Complete a prompt and return a response model.
+
+    Returns:
+      A validated instance of `response_model`.
+
+    """
     from agentree.completion.claude_sdk import DEFAULT_OPTIONS, generate_structured_completion
 
     options = dataclasses.replace(DEFAULT_OPTIONS, system_prompt=system_prompt)

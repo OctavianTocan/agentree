@@ -17,7 +17,12 @@ class CodexCompletionClient(StructuredCompletionClient):
     *,
     system_prompt: str,
   ) -> ResponseModel:
-    """Complete a prompt and return a response model."""
+    """Complete a prompt and return a response model.
+
+    Returns:
+      A validated instance of `response_model`.
+
+    """
     from agentree.completion.codex_sdk import generate_structured_completion
 
     return await generate_structured_completion(

@@ -11,8 +11,19 @@ def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSectio
   """Derive each section's page range over the flat outline.
 
   ``end_index`` is the next section's start minus one; the final section runs
-  to ``doc.last_page``. Raises ValueError on a missing ``physical_index`` — v1
-  has no page-offset recovery.
+  to ``doc.last_page``.
+
+  Args:
+    outline: Flat, draft outline whose sections carry a ``physical_index``.
+    doc: Source document, used for ``last_page``.
+
+  Returns:
+    The same sections, in order, with page ranges resolved.
+
+  Raises:
+    ValueError: If any section is missing a ``physical_index`` — v1 has no
+      page-offset recovery.
+
   """
   flat_sections: list[FlatSection] = []
   sections = outline.sections

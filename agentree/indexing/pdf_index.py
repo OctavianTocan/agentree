@@ -121,8 +121,13 @@ def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
 def assemble_tree(outline: Outline, doc: Document) -> Tree:
   """Assemble a nested Tree from a flat draft outline and PDF Document facts.
 
-  Uses ``doc.name`` for ``doc_name`` and ``doc.last_page`` to close the final
-  section's range.
+  Args:
+    outline: Flat, draft outline to nest.
+    doc: Source document, supplying ``doc_name`` and the final page.
+
+  Returns:
+    The assembled tree for `doc`.
+
   """
   # Convert the outline to a list of flat sections.
   flat_sections: list[FlatSection] = outline_to_flat_sections(outline=outline, doc=doc)

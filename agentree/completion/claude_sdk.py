@@ -77,8 +77,13 @@ building a `ClaudeAgentOptions` from scratch.
 def strip_json_fence(response: str) -> str:
   """Remove a markdown JSON fence.
 
-  Removes a ```json ... ``` (or bare ``` ... ```) fence wrapped around a model
-  response, if present.
+  Args:
+    response: Raw model reply, optionally fenced.
+
+  Returns:
+    The response with a surrounding ```json ... ``` (or bare ``` ... ```) fence
+    removed, or unchanged if it was not fenced.
+
   """
   text = response.strip()
   if text.startswith('```'):

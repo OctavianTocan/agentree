@@ -18,7 +18,15 @@ class DisabledCompletionClient(StructuredCompletionClient):
     *,
     system_prompt: str,
   ) -> ResponseModel:
-    """Return an empty instance of `response_model` without calling a provider."""
+    """Return an empty instance of `response_model` without calling a provider.
+
+    Returns:
+      An empty instance of `response_model`.
+
+    Raises:
+      TypeError: If `response_model` has no defined empty form.
+
+    """
     if response_model is BoolModel:
       return response_model(value=False)
     if response_model is Outline:

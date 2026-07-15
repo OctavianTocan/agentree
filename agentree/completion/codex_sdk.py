@@ -23,6 +23,9 @@ async def generate_structured_completion(
   Returns:
     An instance of the validated response model.
 
+  Raises:
+    RuntimeError: If Codex returns an empty response.
+
   """
   async with AsyncCodex() as codex:
     thread: AsyncThread = await codex.thread_start(
