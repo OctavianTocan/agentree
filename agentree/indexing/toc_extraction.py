@@ -79,6 +79,8 @@ async def extract_outline_continuation(
     f'Previous outline:\n{previous_outline.model_dump_json(indent=2)}\n\n'
     f'Current part of the document:\n{chunk_text}'
   )
+  # TODO: This is where passing only the currently open spine would be useful. To avoid
+  # sending the full outline to the LLM every single time.
   result: Outline = await client.complete(
     prompt,
     Outline,
