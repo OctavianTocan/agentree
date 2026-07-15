@@ -33,4 +33,5 @@ def create_completion_client(
     return ClaudeCompletionClient()
   if provider == 'codex':
     return CodexCompletionClient()
-  raise ValueError(f'Invalid completion client: {provider!r}')
+  msg = f'Invalid completion client: {provider!r}'
+  raise ValueError(msg)

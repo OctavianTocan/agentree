@@ -23,4 +23,5 @@ class DisabledCompletionClient(StructuredCompletionClient):
       return response_model(value=False)
     if response_model is Outline:
       return response_model(sections=[])
-    raise TypeError(f'No disabled default for response model: {response_model!r}')
+    msg = f'No disabled default for response model: {response_model!r}'
+    raise TypeError(msg)

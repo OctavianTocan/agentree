@@ -44,7 +44,8 @@ async def generate_structured_completion(
     if result.error is not None:
       logger.bind(error=str(result.error)).error('Codex turn returned an error')
     if result.final_response is None:
-      raise RuntimeError('Codex returned empty response')
+      msg = 'Codex returned empty response'
+      raise RuntimeError(msg)
     try:
       parsed = response_model.model_validate_json(result.final_response)
     except Exception:

@@ -4,6 +4,8 @@ from agentree.models import FlatSection, Outline
 from agentree.models.document import Document
 from agentree.models.tree import Node
 
+_MISSING_PHYSICAL_INDEX = 'Physical index is required for each section'
+
 
 def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSection]:
   """Derive each section's page range over the flat outline.
@@ -16,14 +18,14 @@ def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSectio
   sections = outline.sections
   for i, section in enumerate(sections):
     if section.physical_index is None:
-      raise ValueError('Physical index is required for each section')
+      raise ValueError(_MISSING_PHYSICAL_INDEX)
     # end = next section's start - 1; the last section runs to the final page.
     if i == len(sections) - 1:
       end_index: int = doc.last_page
     else:
       next_start = sections[i + 1].physical_index
       if next_start is None:
-        raise ValueError('Physical index is required for each section')
+        raise ValueError(_MISSING_PHYSICAL_INDEX)
       end_index = next_start - 1
 
     flat_sections.append(
