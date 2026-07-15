@@ -16,7 +16,7 @@
   <a href="https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/OctavianTocan/agentree/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml"><img alt="CodeQL" src="https://github.com/OctavianTocan/agentree/actions/workflows/codeql.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-  <a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-blue.svg"></a>
+  <a href="https://www.python.org/downloads/"><img alt="Python 3.14+" src="https://img.shields.io/badge/python-3.14%2B-blue.svg"></a>
 </p>
 
 ## Inspiration
@@ -61,7 +61,7 @@ Agentree aims for **retrieval-as-tools**:
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.14+
 - [uv](https://docs.astral.sh/uv/) (recommended)
 - For Claude: OAuth token from `claude setup-token` (`CLAUDE_CODE_OAUTH_TOKEN`
   or `AGENTREE_CLAUDE_CODE_OAUTH_TOKEN`)

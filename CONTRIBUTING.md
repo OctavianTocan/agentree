@@ -12,7 +12,7 @@ Thanks for considering a contribution to Agentree.
 
 ## Development setup
 
-Requirements: Python 3.10+, [uv](https://docs.astral.sh/uv/).
+Requirements: Python 3.14+, [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/OctavianTocan/agentree.git

@@ -1,7 +1,8 @@
 """Assembled index product: nested Node tree wrapped as Tree."""
 
+from typing import Self
+
 from pydantic import BaseModel, Field
-from typing_extensions import Self
 
 
 class Node(BaseModel):
