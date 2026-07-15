@@ -108,5 +108,55 @@ max-complexity = 10
   "DOC",     # Test bodies are the documentation; no Returns:/Raises: prose needed
 ]
 
+[tool.ty.environment]
+# Check against the floor in `requires-python`, not whatever the dev venv happens
+# to be, so newer-than-floor APIs can't slip past CI and break installs.
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["agentree", "tests"]
+
+[tool.ty.rules]
+# Every rule ty ships at `warn`/`ignore`, raised to `error`. The codebase is clean
+# against all of them today, so this only constrains new code. Listed explicitly
+# rather than via `--error all` so the editor's LSP agrees with CI, and so a ty
+# upgrade adding a rule can't fail the build without a visible edit here.
+
+# Bare `list` / `dict` silently become `Unknown`; require the parameters.
+missing-type-argument = "error"
+missing-override-decorator = "error"
+ambiguous-protocol-member = "error"
+invalid-enum-member-annotation = "error"
+invalid-legacy-positional-parameter = "error"
+invalid-named-tuple-override = "error"
+mismatched-type-name = "error"
+unsupported-base = "error"
+unsupported-dynamic-base = "error"
+useless-overload-body = "error"
+redundant-cast = "error"
+redundant-final-classvar = "error"
+ineffective-final = "error"
+subclass-of-dataclass-with-order = "error"
+unused-awaitable = "error"
+deprecated = "error"
+division-by-zero = "error"
+unresolved-global = "error"
+undefined-reveal = "error"
+experimental-syntax = "error"
+
+# `possibly-*` are ignore-by-default because they can false-positive on
+# conditionally-defined names. Clean here; suppress per-line if one misfires.
+possibly-unresolved-reference = "error"
+possibly-missing-import = "error"
+possibly-missing-attribute = "error"
+possibly-missing-implicit-call = "error"
+possibly-missing-submodule = "error"
+
+# Keep suppression comments honest: no stale, malformed, or unknown-rule ignores.
+unused-ignore-comment = "error"
+unused-type-ignore-comment = "error"
+invalid-ignore-comment = "error"
+ignore-comment-unknown-rule = "error"
+
 [tool.uv.sources]
 openai-codex = { git = "https://github.com/openai/codex.git", subdirectory = "sdk/python" }
