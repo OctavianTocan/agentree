@@ -36,13 +36,22 @@ class Document(BaseModel):
     return len(self.pages)
 
   @classmethod
-  def from_pages(cls, pdf_path: str | Path, pages: list[Page]) -> 'Document':
-    """Build a Document from a path and already-tagged pages."""
+  def from_pages(cls, pdf_path: str | Path, pages: list[Page]) -> Document:
+    """Build a Document from a path and already-tagged pages.
+
+    Args:
+      pdf_path: Path the pages were read from; supplies ``name``.
+      pages: Pages already tagged with physical indices.
+
+    Returns:
+      A Document over `pages`.
+
+    """
     path = Path(pdf_path)
     return cls(path=path, name=path.name, pages=pages)
 
   @classmethod
-  def load(cls, pdf_path: str | Path) -> 'Document':
+  def load(cls, pdf_path: str | Path) -> Document:
     """Load a document from a PDF path.
 
     Args:
