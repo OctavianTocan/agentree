@@ -34,3 +34,6 @@ reference/
 # AI Agent Files
 AGENTS.md
 CLAUDE.md
+
+# Indexer Output
+output/
