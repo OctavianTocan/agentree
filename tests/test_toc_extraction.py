@@ -34,7 +34,7 @@ This section describes our results.
 
 
 @requires_live_claude
-def test_extract_outline_initial_finds_overview_section():
+def test_extract_outline_initial_finds_overview_section() -> None:
   client = create_completion_client('claude')
   outline = asyncio.run(extract_outline_initial(FIRST_CHUNK, client=client))
 
@@ -43,7 +43,7 @@ def test_extract_outline_initial_finds_overview_section():
 
 
 @requires_live_claude
-def test_extract_outline_continuation_finds_new_section_not_in_previous():
+def test_extract_outline_continuation_finds_new_section_not_in_previous() -> None:
   client = create_completion_client('claude')
   previous_outline = Outline(
     sections=[

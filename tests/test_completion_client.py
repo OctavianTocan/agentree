@@ -10,7 +10,7 @@ from agentree.config import settings
 from agentree.models import BoolModel, Outline
 
 
-def test_create_completion_client_defaults_to_claude(monkeypatch):
+def test_create_completion_client_defaults_to_claude(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(settings, 'completions_enabled', True)
   monkeypatch.setattr(settings, 'completion_client', 'claude')
 
@@ -19,7 +19,7 @@ def test_create_completion_client_defaults_to_claude(monkeypatch):
   assert isinstance(client, ClaudeCompletionClient)
 
 
-def test_create_completion_client_selects_codex(monkeypatch):
+def test_create_completion_client_selects_codex(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(settings, 'completions_enabled', True)
 
   client = create_completion_client('codex')
@@ -27,7 +27,7 @@ def test_create_completion_client_selects_codex(monkeypatch):
   assert isinstance(client, CodexCompletionClient)
 
 
-def test_create_completion_client_rejects_unknown_provider(monkeypatch):
+def test_create_completion_client_rejects_unknown_provider(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setattr(settings, 'completions_enabled', True)
   monkeypatch.setattr(settings, 'completion_client', 'bogus')
 
@@ -35,7 +35,9 @@ def test_create_completion_client_rejects_unknown_provider(monkeypatch):
     create_completion_client()
 
 
-def test_create_completion_client_returns_disabled_when_completions_off(monkeypatch):
+def test_create_completion_client_returns_disabled_when_completions_off(
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
   monkeypatch.setattr(settings, 'completions_enabled', False)
 
   client = create_completion_client('codex')
@@ -43,7 +45,7 @@ def test_create_completion_client_returns_disabled_when_completions_off(monkeypa
   assert isinstance(client, DisabledCompletionClient)
 
 
-def test_disabled_completion_client_returns_empty_structured_responses():
+def test_disabled_completion_client_returns_empty_structured_responses() -> None:
   client = DisabledCompletionClient()
 
   bool_result = asyncio.run(client.complete('prompt', BoolModel, system_prompt='system'))

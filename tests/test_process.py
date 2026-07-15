@@ -1,7 +1,7 @@
 from agentree.indexing.pdf_io import tag_physical_indices
 
 
-def test_tags_each_page_with_its_physical_index():
+def test_tags_each_page_with_its_physical_index() -> None:
   page_list = [('first page text', 10), ('second page text', 10)]
 
   pages = tag_physical_indices(page_list)
@@ -13,7 +13,7 @@ def test_tags_each_page_with_its_physical_index():
   assert 'second page text' in pages[1].content
 
 
-def test_start_index_offsets_the_physical_index():
+def test_start_index_offsets_the_physical_index() -> None:
   page_list = [('only page', 5)]
 
   pages = tag_physical_indices(page_list, start_index=7)

@@ -56,7 +56,7 @@ def test_assemble_tree_fails_loud_on_missing_physical_index() -> None:
     assemble_tree(outline, _doc_with_pages(2))
 
 
-def test_document_exposes_name_and_last_page():
+def test_document_exposes_name_and_last_page() -> None:
   path = Path('examples/documents/report.pdf')
   doc = Document.from_pages(
     path,

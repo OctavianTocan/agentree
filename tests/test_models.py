@@ -12,7 +12,7 @@ from agentree.models import (
 )
 
 
-def test_tree_round_trips_through_json():
+def test_tree_round_trips_through_json() -> None:
   tree = Tree(
     doc_name='report.pdf',
     nodes=[
@@ -34,7 +34,7 @@ def test_tree_round_trips_through_json():
   assert round_tripped == tree
 
 
-def test_leaf_node_defaults_to_no_children():
+def test_leaf_node_defaults_to_no_children() -> None:
   node = Node(title='Conclusion', start_index=10, end_index=11)
 
   assert node.children == []
@@ -46,7 +46,7 @@ def test_outline_section_physical_index_defaults_to_none() -> None:
   assert section.physical_index is None
 
 
-def test_outline_section_list_round_trips_through_json():
+def test_outline_section_list_round_trips_through_json() -> None:
   sections = Outline(
     sections=[
       OutlineSection(depth=0, title='Overview', physical_index=7),
@@ -66,7 +66,7 @@ def test_flat_section_has_page_range() -> None:
   assert section.end_index == 1
 
 
-def test_document_is_frozen():
+def test_document_is_frozen() -> None:
   doc = Document.from_pages('a.pdf', [Page(content='x', tokens=1)])
 
   assert doc.model_config['frozen'] is True

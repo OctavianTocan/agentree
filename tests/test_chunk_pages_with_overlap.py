@@ -6,7 +6,7 @@ def make_page(label: str, tokens: int) -> Page:
   return Page(content=f'<{label}>', tokens=tokens)
 
 
-def test_single_chunk_when_everything_fits_under_budget():
+def test_single_chunk_when_everything_fits_under_budget() -> None:
   pages = [make_page('A', 100), make_page('B', 100), make_page('C', 100)]
 
   chunks = chunk_pages_with_overlap(pages)
@@ -14,7 +14,7 @@ def test_single_chunk_when_everything_fits_under_budget():
   assert [chunk.content for chunk in chunks] == ['<A><B><C>']
 
 
-def test_splits_into_multiple_chunks_when_over_budget():
+def test_splits_into_multiple_chunks_when_over_budget() -> None:
   # Each page is a third of the budget, so six of them need more than one chunk.
   page_tokens = MAX_TOKENS_PER_CHUNK // 3
   pages = [make_page(label, page_tokens) for label in 'ABCDEF']
@@ -26,7 +26,7 @@ def test_splits_into_multiple_chunks_when_over_budget():
     assert any(page.content in chunk.content for chunk in chunks), f'{page.content} was dropped'
 
 
-def test_consecutive_chunks_share_overlap_content():
+def test_consecutive_chunks_share_overlap_content() -> None:
   page_tokens = MAX_TOKENS_PER_CHUNK // 3
   pages = [make_page(label, page_tokens) for label in 'ABCDEF']
 
@@ -42,7 +42,7 @@ def test_consecutive_chunks_share_overlap_content():
     assert shared, 'consecutive chunks should share at least one overlapping page'
 
 
-def test_oversized_single_page_is_not_dropped():
+def test_oversized_single_page_is_not_dropped() -> None:
   # A page bigger than the whole budget on its own - not something to silently lose.
   huge = make_page('HUGE', MAX_TOKENS_PER_CHUNK * 2)
   pages = [make_page('A', 100), huge, make_page('B', 100)]

@@ -11,7 +11,7 @@ class _SettingsForTests(Settings):
   model_config = SettingsConfigDict(env_file=None)
 
 
-def test_defaults_when_unset(monkeypatch):
+def test_defaults_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.delenv('AGENTREE_COMPLETION_CLIENT', raising=False)
   monkeypatch.delenv('AGENTREE_COMPLETIONS_ENABLED', raising=False)
   monkeypatch.delenv('AGENTREE_CLAUDE_MODEL', raising=False)
@@ -27,7 +27,7 @@ def test_defaults_when_unset(monkeypatch):
   assert settings.claude_code_oauth_token is None
 
 
-def test_reads_completions_enabled_as_bool(monkeypatch):
+def test_reads_completions_enabled_as_bool(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setenv('AGENTREE_COMPLETIONS_ENABLED', '0')
 
   settings = _SettingsForTests()
@@ -35,14 +35,14 @@ def test_reads_completions_enabled_as_bool(monkeypatch):
   assert settings.completions_enabled is False
 
 
-def test_rejects_invalid_claude_model_alias(monkeypatch):
+def test_rejects_invalid_claude_model_alias(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setenv('AGENTREE_CLAUDE_MODEL', 'not-a-real-model')
 
   with pytest.raises(ValidationError):
     _SettingsForTests()
 
 
-def test_reads_max_tokens_per_chunk_as_int(monkeypatch):
+def test_reads_max_tokens_per_chunk_as_int(monkeypatch: pytest.MonkeyPatch) -> None:
   monkeypatch.setenv('AGENTREE_MAX_TOKENS_PER_CHUNK', '5000')
 
   settings = _SettingsForTests()
