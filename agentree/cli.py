@@ -1,6 +1,6 @@
 """CLI entrypoint for indexing a PDF into a section tree."""
 
-import os
+from pathlib import Path
 
 import typer
 from loguru import logger
@@ -21,10 +21,12 @@ def main(
   """Process a PDF document and generate its structure."""
   if not pdf_path.lower().endswith('.pdf'):
     logger.error('Invalid file extension: {}', pdf_path)
-    raise ValueError('PDF file must have .pdf extension')
-  if not os.path.isfile(pdf_path):
+    msg = 'PDF file must have .pdf extension'
+    raise ValueError(msg)
+  if not Path(pdf_path).is_file():
     logger.error('PDF file not found: {}', pdf_path)
-    raise ValueError(f'PDF file not found: {pdf_path}')
+    msg = f'PDF file not found: {pdf_path}'
+    raise ValueError(msg)
 
   logger.bind(pdf_path=pdf_path).info('Processing PDF')
   # TODO: Persist the result once index() returns Tree (+ pages): init_db,
