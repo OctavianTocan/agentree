@@ -145,7 +145,7 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[P
 
   """
   # Calculate the total token count of the pages.
-  total_token_count = sum([page.tokens for page in pages])
+  total_token_count = sum(page.tokens for page in pages)
 
   # Merge all pages into one chunk if the total token count is less than the token budget.
   if total_token_count <= MAX_TOKENS_PER_CHUNK:
@@ -194,7 +194,7 @@ def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[P
       # section header split across the chunk boundary still appears in both chunks.
       overlap_start = max(page_index - overlap_page, 0)
       current_chunk_pages = [page.content for page in pages[overlap_start:page_index]]
-      current_token_count = sum([page.tokens for page in pages[overlap_start:page_index]])
+      current_token_count = sum(page.tokens for page in pages[overlap_start:page_index])
 
     # Add the current page to the current chunk's pages.
     current_chunk_pages.append(current_page_contents)
