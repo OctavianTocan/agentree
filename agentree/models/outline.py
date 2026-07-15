@@ -6,9 +6,13 @@ from agentree.models.base import StrictModel
 
 
 class SectionRef(BaseModel):
-  """Dotted code + title — shared by draft and ranged-flat stages."""
+  """Depth + title — shared by draft and ranged-flat stages."""
 
-  code: str = Field(description='Dotted hierarchy code, e.g. "1", "1.1", "2".')
+  depth: int = Field(
+    description='Depth of the section in the hierarchy, e.g. 0 for top'
+    'level, 1 for first level, 2 for second level, etc. Base it on the visual'
+    "hierarchy, not the document's own numbering."
+  )
   title: str = Field(description='Section heading text.')
 
 
@@ -17,7 +21,7 @@ class OutlineSection(SectionRef, StrictModel):
 
   Example::
 
-      {'code': '1.1', 'title': 'Key Points', 'physical_index': 1}
+      {'depth': 1, 'title': 'Key Points', 'physical_index': 1}
   """
 
   physical_index: int | None = Field(
@@ -37,8 +41,8 @@ class Outline(StrictModel):
 
       {
         'sections': [
-          {'code': '1', 'title': 'Results', 'physical_index': 1},
-          {'code': '1.1', 'title': 'Key Points', 'physical_index': 1},
+          {'depth': 0, 'title': 'Results', 'physical_index': 1},
+          {'depth': 1, 'title': 'Key Points', 'physical_index': 1},
         ]
       }
   """
@@ -51,12 +55,12 @@ class Outline(StrictModel):
 class FlatSection(SectionRef):
   """Draft row after page ranges are derived; still flat (not nested).
 
-  Not an LLM response schema — assembly-only. ``code`` is kept so nesting can
-  find the parent (``"1.1"`` → ``"1"``).
+  Not an LLM response schema — assembly-only. ``depth`` is kept so nesting can
+  find the parent (``0`` → ``1``).
 
   Example::
 
-      {'code': '1', 'title': 'Results', 'start_index': 1, 'end_index': 1}
+      {'depth': 0, 'title': 'Results', 'start_index': 1, 'end_index': 1}
   """
 
   start_index: int = Field(description='First physical PDF page (1-indexed) this section spans.')

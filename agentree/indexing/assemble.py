@@ -1,7 +1,5 @@
 """Pure flat-outline → nested Tree assembly (no I/O, no LLM calls)."""
 
-from loguru import logger
-
 from agentree.models import FlatSection, Outline
 from agentree.models.document import Document
 from agentree.models.tree import Node
@@ -30,7 +28,7 @@ def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSectio
 
     flat_sections.append(
       FlatSection(
-        code=section.code,
+        depth=section.depth,
         title=section.title,
         start_index=section.physical_index,
         end_index=end_index,
@@ -39,32 +37,49 @@ def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSectio
   return flat_sections
 
 
-def flat_sections_to_nodes(flat_sections: list[FlatSection]) -> list[Node]:
-  """Nest flat sections by dotted code ("1.1" under "1") and assign zero-padded ids."""
-  nodes: list[Node] = []
-  nodes_dict: dict[str, Node] = {}
-  for i, flat_section in enumerate(flat_sections):
-    code: str = flat_section.code
-    node: Node = Node(
-      title=flat_section.title,
-      start_index=flat_section.start_index,
-      end_index=flat_section.end_index,
-      id=f'{i:04d}',
-    )
+def flat_sections_to_nodes(sections: list[FlatSection]) -> list[Node]:
+  """Nest flat sections by depth.
 
-    # Add the node to the dictionary.
-    nodes_dict[code] = node
+  Args:
+    sections: Flat sections in document order, each with a ``depth``.
 
-    # Find the parent.
-    parent_code: str | None = '.'.join(code.split('.')[:-1]) if len(code.split('.')) > 1 else None
+  Returns:
+    The root-level nodes, with deeper sections nested as children.
 
-    # Add the node to the parent's children.
-    if parent_code and parent_code in nodes_dict:
-      nodes_dict[parent_code].children.append(node)
-    else:
-      # No parent, this is a root node.
-      nodes.append(node)
+  """
+  # Dummy root node.
+  root = Node(title='', start_index=0, end_index=0)
+  stack: list[Node] = [root]
 
-    logger.debug(f'Node {i}: {node.model_dump_json(indent=2)}')
+  for section in sections:
+    # We use min() to ensure that the depth is not greater than the length of the stack.
+    deepest_parent_depth: int = len(stack) - 1
+    depth: int = min(section.depth, deepest_parent_depth)
 
-  return nodes
+    # Create the node, and add it to the parent's children.
+    node = Node(title=section.title, start_index=section.start_index, end_index=section.end_index)
+    stack[depth].children.append(node)
+
+    # Remove all parents that are deeper than the current depth. That way we don't have to traverse
+    # the tree to find the parent.
+    del stack[depth + 1 :]
+    stack.append(node)
+
+  return root.children
+
+
+# TODO: How would this code know which sections need to be sent to the LLM? I don't understand
+# that. Shouldn't we just use the outline that we pass to it, and maybe just grab its parents if
+# it has them, and if not, then we just pass it the last same-depth section?
+# def open_spine(sections: list[FlatSection]) -> list[FlatSection]:
+#     """The chain of still-open ancestors: walk from the end, keep each section
+#     whose level is strictly less than the last one we kept."""
+#     spine: list[FlatSection] = []
+#     need = None  # max level allowed for the next (shallower) ancestor
+#     for s in reversed(sections):
+#         if need is None or s.level < need:
+#             spine.append(s)
+#             need = s.level
+#         if need == 0:
+#             break
+#     return list(reversed(spine))

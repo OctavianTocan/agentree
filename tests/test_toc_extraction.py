@@ -47,8 +47,8 @@ def test_extract_outline_continuation_finds_new_section_not_in_previous():
   client = create_completion_client('claude')
   previous_outline = Outline(
     sections=[
-      OutlineSection(code='1', title='Overview', physical_index=2),
-      OutlineSection(code='2', title='Methods', physical_index=None),
+      OutlineSection(depth=0, title='Overview', physical_index=2),
+      OutlineSection(depth=0, title='Methods', physical_index=None),
     ]
   )
 

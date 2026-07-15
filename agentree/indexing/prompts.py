@@ -18,7 +18,7 @@ CHECK_PAGE_FOR_TOC_PROMPT = """
 EXTRACT_OUTLINE_INITIAL_PROMPT = """
     You are an expert in extracting hierarchical tree structure, your task is to generate the tree structure of the document.
 
-    The code variable is the numeric system which represents the index of the hierarchy section in the table of contents. For example, the first section has code 1, the first subsection has code 1.1, the second subsection has code 1.2, etc.
+    The depth variable is the numeric system which represents the index of the hierarchy section in the table of contents. For example, the first section has depth 1, the first subsection has depth 1.1, the second subsection has depth 1.2, etc.
 
     For the title, you need to extract the original title from the text, only fix the space inconsistency.
 
@@ -34,7 +34,7 @@ EXTRACT_OUTLINE_CONTINUATION_PROMPT = """
     You are given a tree structure of the previous part and the text of the current part.
     Your task is to continue the tree structure from the previous part to include the current part.
 
-    The code variable is the numeric system which represents the index of the hierarchy section in the table of contents. For example, the first section has code 1, the first subsection has code 1.1, the second subsection has code 1.2, etc.
+    The depth variable is the numeric system which represents the index of the hierarchy section in the table of contents. For example, the first section has depth 1, the first subsection has depth 1.1, the second subsection has depth 1.2, etc.
 
     For the title, you need to extract the original title from the text, only fix the space inconsistency.
 

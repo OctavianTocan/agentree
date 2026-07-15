@@ -40,8 +40,8 @@ def test_leaf_node_defaults_to_no_children():
   assert node.children == []
 
 
-def test_outline_section_physical_index_defaults_to_none():
-  section = OutlineSection(code='1', title='Overview')
+def test_outline_section_physical_index_defaults_to_none() -> None:
+  section = OutlineSection(depth=0, title='Overview')
 
   assert section.physical_index is None
 
@@ -49,8 +49,8 @@ def test_outline_section_physical_index_defaults_to_none():
 def test_outline_section_list_round_trips_through_json():
   sections = Outline(
     sections=[
-      OutlineSection(code='1', title='Overview', physical_index=7),
-      OutlineSection(code='2', title='Methods', physical_index=None),
+      OutlineSection(depth=0, title='Overview', physical_index=7),
+      OutlineSection(depth=0, title='Methods', physical_index=None),
     ]
   )
 
@@ -59,8 +59,8 @@ def test_outline_section_list_round_trips_through_json():
   assert round_tripped == sections
 
 
-def test_flat_section_has_page_range():
-  section = FlatSection(code='1', title='Results', start_index=1, end_index=1)
+def test_flat_section_has_page_range() -> None:
+  section = FlatSection(depth=0, title='Results', start_index=1, end_index=1)
 
   assert section.start_index == 1
   assert section.end_index == 1
