@@ -3,13 +3,14 @@
 import os
 
 from claude_agent_sdk import EffortLevel
-from openai_codex.generated.v2_all import Personality, ReasoningEffort
+from openai_codex.generated.v2_all import Personality
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from agentree.types.aliases import (
   ClaudeModelAlias,
   ClaudeModelId,
   CodexModelAlias,
+  CodexReasoningEffortAlias,
   CompletionClientAlias,
 )
 
@@ -46,7 +47,7 @@ class Settings(BaseSettings):
   codex_ephemeral: bool = True
 
   # The reasoning effort to use for the Codex client.
-  codex_reasoning_effort: ReasoningEffort = ReasoningEffort.none
+  codex_reasoning_effort: CodexReasoningEffortAlias = 'none'
 
   # Codex service tier (e.g. 'priority', 'flex'); None uses the model's default tier.
   codex_service_tier: str | None = None

@@ -2,6 +2,7 @@
 
 from loguru import logger
 from openai_codex import ApprovalMode, AsyncCodex, AsyncThread, Sandbox, TurnResult
+from openai_codex.generated.v2_all import ReasoningEffort
 
 from agentree.config import settings
 from agentree.types.completion import ResponseModel
@@ -39,7 +40,7 @@ async def generate_structured_completion(
     )
     result: TurnResult = await thread.run(
       input=prompt,
-      effort=settings.codex_reasoning_effort,
+      effort=ReasoningEffort(settings.codex_reasoning_effort),
       output_schema=response_model.model_json_schema(),
       service_tier=settings.codex_service_tier,
     )
