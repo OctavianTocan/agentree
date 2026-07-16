@@ -6,7 +6,7 @@ import math
 from loguru import logger
 
 from agentree.config import settings
-from agentree.indexing.assemble import flat_sections_to_nodes, outline_to_flat_sections
+from agentree.indexing.assemble import flat_sections_to_nodes, open_spine, outline_to_flat_sections
 from agentree.indexing.toc_extraction import (
   check_page_for_toc,
   extract_outline_continuation,
@@ -72,7 +72,9 @@ def index(pdf_path: str) -> Tree:
 
     # Add all the continuation chunks to the outline.
     for chunk in chunk_pages[1:]:
-      continuation: Outline = asyncio.run(extract_outline_continuation(chunk.content, outline))
+      continuation: Outline = asyncio.run(
+        extract_outline_continuation(chunk.content, open_spine(sections=outline.sections))
+      )
       logger.info(
         'continuation_outline:\n{}',
         continuation.model_dump_json(indent=2),

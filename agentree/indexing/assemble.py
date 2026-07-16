@@ -1,6 +1,6 @@
 """Pure flat-outline → nested Tree assembly (no I/O, no LLM calls)."""
 
-from agentree.models import FlatSection, Outline
+from agentree.models import FlatSection, Outline, OutlineSection
 from agentree.models.document import Document
 from agentree.models.tree import Node
 
@@ -81,18 +81,32 @@ def flat_sections_to_nodes(sections: list[FlatSection]) -> list[Node]:
   return root.children
 
 
-# TODO: How would this code know which sections need to be sent to the LLM? I don't understand
-# that. Shouldn't we just use the outline that we pass to it, and maybe just grab its parents if
-# it has them, and if not, then we just pass it the last same-depth section?
-# def open_spine(sections: list[FlatSection]) -> list[FlatSection]:
-#     """The chain of still-open ancestors: walk from the end, keep each section
-#     whose level is strictly less than the last one we kept."""
-#     spine: list[FlatSection] = []
-#     need = None  # max level allowed for the next (shallower) ancestor
-#     for s in reversed(sections):
-#         if need is None or s.level < need:
-#             spine.append(s)
-#             need = s.level
-#         if need == 0:
-#             break
-#     return list(reversed(spine))
+def open_spine(sections: list[OutlineSection]) -> list[OutlineSection]:
+  """The chain of still-open ancestors — the rightmost path down the outline so far.
+
+  Sent to the LLM as continuation context so it can place the next chunk's
+  headings at the right depth, without re-sending the whole outline.
+
+  Args:
+    sections: Draft outline sections in document order, each with a ``depth``.
+
+  Returns:
+    The open ancestors from shallowest to deepest; closed branches dropped.
+
+  Example::
+
+      depth  section       pops                     stack after
+      0      A             —                        [A]
+      1        A.1         —                        [A, A.1]
+      2          A.1.a     —                        [A, A.1, A.1.a]
+      1        A.2         A.1.a (2>=1), A.1 (1>=1)  [A, A.2]
+      2          A.2.a     —                        [A, A.2, A.2.a]
+
+      open_spine([A, A.1, A.1.a, A.2, A.2.a]) -> [A, A.2, A.2.a]
+  """
+  stack: list[OutlineSection] = []
+  for section in sections:
+    while stack and stack[-1].depth >= section.depth:
+      stack.pop()
+    stack.append(section)
+  return stack

@@ -1,12 +1,14 @@
 """Task-specific logic for extracting a document outline without a table of contents."""
 
+from loguru import logger
+
 from agentree.completion import StructuredCompletionClient, create_completion_client
 from agentree.indexing.prompts import (
   CHECK_PAGE_FOR_TOC_PROMPT,
   EXTRACT_OUTLINE_CONTINUATION_PROMPT,
   EXTRACT_OUTLINE_INITIAL_PROMPT,
 )
-from agentree.models import BoolModel, Outline, Page
+from agentree.models import BoolModel, Outline, OutlineSection, Page
 
 # TODO: Add TOC-found helpers used by pdf_index.index when toc_pages is non-empty:
 #   - extract_toc_content(pages) → raw TOC text (or merge into check_page_for_toc)
@@ -60,28 +62,24 @@ async def extract_outline_initial(
 
 async def extract_outline_continuation(
   chunk_text: str,
-  previous_outline: Outline,
+  spine: list[OutlineSection],
   client: StructuredCompletionClient | None = None,
 ) -> Outline:
   """Continue the draft outline into the next chunk, given what's been extracted so far.
 
   Args:
       chunk_text: Page-tagged text of the current chunk.
-      previous_outline: Sections already extracted from earlier chunks.
+      spine: Open-ancestor path from earlier chunks (rightmost outline path).
       client: Optional completion client override.
 
   Returns:
       Only the new sections found in this chunk, in document order.
 
   """
-  client: StructuredCompletionClient = client or create_completion_client()
-  prompt: str = (
-    f'Previous outline:\n{previous_outline.model_dump_json(indent=2)}\n\n'
-    f'Current part of the document:\n{chunk_text}'
-  )
-  # TODO: This is where passing only the currently open spine would be useful. To avoid
-  # sending the full outline to the LLM every single time.
-  result: Outline = await client.complete(
+  spine_json = Outline(sections=spine).model_dump_json(indent=2)
+  logger.debug('continuation spine:\n{}', spine_json)
+  prompt = f'Previous tree structure:\n{spine_json}\n\nCurrent part of the document:\n{chunk_text}'
+  result: Outline = await (client or create_completion_client()).complete(
     prompt,
     Outline,
     system_prompt=EXTRACT_OUTLINE_CONTINUATION_PROMPT,
