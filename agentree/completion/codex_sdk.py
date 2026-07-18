@@ -4,6 +4,7 @@ from loguru import logger
 from openai_codex import ApprovalMode, AsyncCodex, AsyncThread, Sandbox, TurnResult
 from openai_codex.generated.v2_all import ReasoningEffort
 
+from agentree.completion.pricing import log_codex_cost
 from agentree.config import settings
 from agentree.types.completion import ResponseModel
 
@@ -45,6 +46,7 @@ async def generate_structured_completion(
       service_tier=settings.codex_service_tier,
     )
     logger.bind(status=str(result.status)).debug('Codex turn completed')
+    log_codex_cost(settings.codex_model, result.usage)
     if result.error is not None:
       logger.bind(error=str(result.error)).error('Codex turn returned an error')
     if result.final_response is None:
