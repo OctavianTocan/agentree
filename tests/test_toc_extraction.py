@@ -47,7 +47,7 @@ def test_extract_outline_continuation_finds_new_section_not_in_previous() -> Non
   client = create_completion_client('claude')
   spine = [
     OutlineSection(depth=0, title='Overview', physical_index=2),
-    OutlineSection(depth=0, title='Methods', physical_index=None),
+    OutlineSection(depth=0, title='Methods', physical_index=5),
   ]
 
   new_outline = asyncio.run(extract_outline_continuation(SECOND_CHUNK, spine, client=client))

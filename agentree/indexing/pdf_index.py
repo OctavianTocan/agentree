@@ -6,7 +6,12 @@ import math
 from loguru import logger
 
 from agentree.config import settings
-from agentree.indexing.assemble import flat_sections_to_nodes, open_spine, outline_to_flat_sections
+from agentree.indexing.assemble import (
+  assign_node_ids,
+  flat_sections_to_nodes,
+  open_spine,
+  outline_to_flat_sections,
+)
 from agentree.indexing.toc_extraction import (
   check_page_for_toc,
   extract_outline_continuation,
@@ -134,6 +139,7 @@ def assemble_tree(outline: Outline, doc: Document) -> Tree:
   # Convert the outline to a list of flat sections.
   flat_sections: list[FlatSection] = outline_to_flat_sections(outline=outline, doc=doc)
   nodes: list[Node] = flat_sections_to_nodes(flat_sections)
+  assign_node_ids(nodes)
   tree: Tree = Tree(doc_name=doc.name, nodes=nodes)
   return tree
 

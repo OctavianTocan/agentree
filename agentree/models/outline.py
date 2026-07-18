@@ -26,11 +26,11 @@ class OutlineSection(SectionRef, StrictModel):
       {'depth': 1, 'title': 'Key Points', 'physical_index': 1}
   """
 
-  physical_index: int | None = Field(
-    default=None,
+  physical_index: int = Field(
+    default=1,
     description=(
       '1-indexed physical page number where this section starts, taken from the'
-      '`<physical_index_N>` tags in the input text. null if it does not start in this chunk.'
+      '`<physical_index_N>` tags in the input text.'
     ),
   )
 

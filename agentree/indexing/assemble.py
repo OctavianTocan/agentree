@@ -1,43 +1,44 @@
 """Pure flat-outline → nested Tree assembly (no I/O, no LLM calls)."""
 
+import re
+
+from loguru import logger
+
 from agentree.models import FlatSection, Outline, OutlineSection
 from agentree.models.document import Document
 from agentree.models.tree import Node
 
-_MISSING_PHYSICAL_INDEX = 'Physical index is required for each section'
+_NODE_ID_WIDTH = 4
+_PHYSICAL_INDEX_TAG = re.compile(r'<physical_index_\d+>')
 
 
 def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSection]:
   """Derive each section's page range over the flat outline.
 
-  ``end_index`` is the next section's start minus one; the final section runs
-  to ``doc.last_page``.
+  A section ends just before the next section's start page — unless that page
+  does not open with the next heading, in which case the two share the page and
+  this section's range extends onto it. The final section runs to
+  ``doc.last_page``.
 
   Args:
     outline: Flat, draft outline whose sections carry a ``physical_index``.
-    doc: Source document, used for ``last_page``.
+    doc: Source document, used for page text and ``last_page``.
 
   Returns:
     The same sections, in order, with page ranges resolved.
 
-  Raises:
-    ValueError: If any section is missing a ``physical_index`` — v1 has no
-      page-offset recovery.
-
   """
   flat_sections: list[FlatSection] = []
   sections = outline.sections
+  last = len(sections) - 1
   for i, section in enumerate(sections):
-    if section.physical_index is None:
-      raise ValueError(_MISSING_PHYSICAL_INDEX)
-    # end = next section's start - 1; the last section runs to the final page.
-    if i == len(sections) - 1:
-      end_index: int = doc.last_page
+    if i == last:
+      end_index = doc.last_page
     else:
-      next_start = sections[i + 1].physical_index
-      if next_start is None:
-        raise ValueError(_MISSING_PHYSICAL_INDEX)
-      end_index = next_start - 1
+      nxt: OutlineSection = sections[i + 1]
+      clean_break = _appears_at_page_start(nxt.title, doc.pages[nxt.physical_index - 1].content)
+      end_index = nxt.physical_index - 1 if clean_break else nxt.physical_index
+      end_index = max(section.physical_index, end_index)
 
     flat_sections.append(
       FlatSection(
@@ -81,6 +82,27 @@ def flat_sections_to_nodes(sections: list[FlatSection]) -> list[Node]:
   return root.children
 
 
+def assign_node_ids(nodes: list[Node]) -> None:
+  """Number the tree with zero-padded ids in depth-first document order.
+
+  Ids ('0000', '0001', …) are walked pre-order, so a parent's id precedes its
+  children's. Each node is mutated in place.
+
+  Args:
+    nodes: Root nodes to number, in document order.
+
+  """
+  # Explicit stack of the not-yet-numbered frontier, kept in document order:
+  # the next node to number is always on top, its children pushed reversed.
+  frontier: list[Node] = list(reversed(nodes))
+  next_id = 0
+  while frontier:
+    node = frontier.pop()
+    node.id = str(next_id).zfill(_NODE_ID_WIDTH)
+    next_id += 1
+    frontier.extend(reversed(node.children))
+
+
 def open_spine(sections: list[OutlineSection]) -> list[OutlineSection]:
   """The chain of still-open ancestors — the rightmost path down the outline so far.
 
@@ -110,3 +132,14 @@ def open_spine(sections: list[OutlineSection]) -> list[OutlineSection]:
       stack.pop()
     stack.append(section)
   return stack
+
+
+def _appears_at_page_start(title: str, page_text: str, window: int = 200) -> bool:
+  head = _normalize(page_text[:window])
+  logger.debug('appears_at_page_start head={!r} title={!r}', head, title)
+  return _normalize(title) in head
+
+
+def _normalize(text: str) -> str:
+  untagged = _PHYSICAL_INDEX_TAG.sub(' ', text)
+  return ' '.join(untagged.casefold().split())

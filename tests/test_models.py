@@ -40,17 +40,17 @@ def test_leaf_node_defaults_to_no_children() -> None:
   assert node.children == []
 
 
-def test_outline_section_physical_index_defaults_to_none() -> None:
+def test_outline_section_physical_index_defaults_to_one() -> None:
   section = OutlineSection(depth=0, title='Overview')
 
-  assert section.physical_index is None
+  assert section.physical_index == 1
 
 
 def test_outline_section_list_round_trips_through_json() -> None:
   sections = Outline(
     sections=[
       OutlineSection(depth=0, title='Overview', physical_index=7),
-      OutlineSection(depth=0, title='Methods', physical_index=None),
+      OutlineSection(depth=0, title='Methods', physical_index=9),
     ]
   )
 
