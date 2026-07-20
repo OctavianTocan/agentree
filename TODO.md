@@ -20,24 +20,24 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
       `convert_physical_index_to_int` unnecessary for the no-TOC path.
       (`agentree/models/outline.py`, `indexing/prompts.py`,
       `tests/test_toc_extraction.py`, `tests/test_models.py`)
-- [ ] **`Document.load` factory** — move PDF extract+tag construction onto
+- [x] **`Document.load` factory** — move PDF extract+tag construction onto
       `Document.load(pdf_path) -> Document`. Keep `tag_physical_indices` as a
       pure module-level function (unit-tested). `load_document` becomes a
       thin wrapper or goes away. Prefer helpers in `indexing/pdf_io.py` if
       `models` ↔ `indexing` import cycles appear. Do not make extract/tag
       mutating instance methods on the frozen bag.
       (`agentree/models/document.py`, `agentree/indexing/pdf_index.py`)
-- [ ] **`outline_to_flat_sections`** — pure: `list[OutlineSection]` +
+- [x] **`outline_to_flat_sections`** — pure: `list[OutlineSection]` +
       `last_page` → `list[FlatSection]`. Rule: `end = next.start - 1`; last
       section → `last_page`. Fail loud on missing `physical_index` (no
       PageIndex `appear_start` in v1). Unit-test with tiny fixtures (no PDF).
       Prefer `agentree/indexing/assemble.py`. PageIndex ref:
       `post_processing` (ranges half only).
-- [ ] **`flat_sections_to_nodes`** — pure: `list[FlatSection]` →
+- [x] **`flat_sections_to_nodes`** — pure: `list[FlatSection]` →
       `list[Node]`. Nest by dotted `structure` (`"1.1"` → parent `"1"`);
       assign zero-padded `node_id`. Unit-test with hand-built `FlatSection`s.
       Same `assemble.py`. PageIndex refs: `list_to_tree`, `write_node_id`.
-- [ ] **Wire `assemble_tree` + `index()`** — thin orchestrator:
+- [x] **Wire `assemble_tree` + `index()`** — thin orchestrator:
       `outline_to_flat_sections` → `flat_sections_to_nodes` →
       `Tree(doc_name=doc.name, structure=nodes)`. Call from no-TOC (and later
       TOC) path. See `reference/pageindex-tree-product.md`.
@@ -53,8 +53,31 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
 - [ ] **Markdown/JSON corpus store (first persistence)** — thin write/read
       adapter over the `Tree` (+ pages): on-disk JSON for the machine
       contract, optional `.md` outline (headings + page ranges) for humans.
-      Wire CLI so indexing writes something observable. Swap in SQLite/DB
-      later behind the same interface. (`agentree/cli.py`, `agentree/storage/`)
+      CLI already has a stopgap `save_tree` → `output/<doc>.json`; replace with
+      a real `agentree/storage/` interface (tree + pages + optional `.md`).
+      (`agentree/cli.py`, `agentree/storage/`)
+
+## Fix the draft quality (the tree is currently wrong)
+
+A real run on `examples/documents/Regulation Best Interest_proposed rule.pdf`
+(408 pages) exposed three defects. See
+`reference/no-toc-structure-and-range-fixes.md` for the build spec + PageIndex
+code. Do these before persistence — a broken tree isn't worth storing.
+
+- [x] **Stop letting the model author the `code`** — done: model emits `depth`
+      (0-based); nesting uses a depth stack in `flat_sections_to_nodes`;
+      continuations get `open_spine(...)` only. (`agentree/models/outline.py`,
+      `indexing/prompts.py`, `indexing/toc_extraction.py`, `indexing/assemble.py`)
+- [x] **Fix `start_index > end_index`** — done via `OutlineSection.starts_at_top`
+      (LLM fills it on the same outline call; no extra per-section call). Range
+      math: `end = next.start - 1` if `starts_at_top` else `end = next.start`,
+      with `end = max(start, end)`. (`models/outline.py`, `indexing/prompts.py`,
+      `indexing/assemble.py`, tests)
+- [ ] **Pre-flight cost estimate** — `agentree/completion/pricing.py` already
+      logs *per-completion* cost. Still missing: one WARNING before fan-out from
+      `sum(page.tokens)` × model $/1M, labelled as a lower bound (excludes
+      output/thinking, retries, TOC scan, continuation re-sends).
+      (`agentree/indexing/pdf_index.py`, `agentree/completion/pricing.py`)
 
 ## Indexing pipeline (after the product works)
 
@@ -100,6 +123,8 @@ These exist in PageIndex; we cut/deferred them on purpose (`MISSION.md`):
 
 # DONE
 
+- [x] Depth-based nesting + open-spine continuations (draft quality Fix 1).
+- [x] `starts_at_top` range derivation (draft quality Fix 2; replaced string heuristic).
 - [x] Add a CLI command that launches agentree, `agentree`.
 - [x] No-TOC flat draft extraction (chunk + init/continue → `list[OutlineSection]`).
 - [x] Document what PageIndex returns vs the draft:

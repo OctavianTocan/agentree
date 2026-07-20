@@ -2,7 +2,9 @@
 
 from loguru import logger
 from openai_codex import ApprovalMode, AsyncCodex, AsyncThread, Sandbox, TurnResult
+from openai_codex.generated.v2_all import ReasoningEffort
 
+from agentree.completion.pricing import log_codex_cost
 from agentree.config import settings
 from agentree.types.completion import ResponseModel
 
@@ -23,6 +25,9 @@ async def generate_structured_completion(
   Returns:
     An instance of the validated response model.
 
+  Raises:
+    RuntimeError: If Codex returns an empty response.
+
   """
   async with AsyncCodex() as codex:
     thread: AsyncThread = await codex.thread_start(
@@ -31,17 +36,22 @@ async def generate_structured_completion(
       approval_mode=ApprovalMode.deny_all,
       personality=settings.personality,
       base_instructions=system_prompt,
+      ephemeral=settings.codex_ephemeral,
+      service_tier=settings.codex_service_tier,
     )
     result: TurnResult = await thread.run(
       input=prompt,
-      effort=settings.codex_reasoning_effort,
+      effort=ReasoningEffort(settings.codex_reasoning_effort),
       output_schema=response_model.model_json_schema(),
+      service_tier=settings.codex_service_tier,
     )
     logger.bind(status=str(result.status)).debug('Codex turn completed')
+    log_codex_cost(settings.codex_model, result.usage)
     if result.error is not None:
       logger.bind(error=str(result.error)).error('Codex turn returned an error')
     if result.final_response is None:
-      raise RuntimeError('Codex returned empty response')
+      msg = 'Codex returned empty response'
+      raise RuntimeError(msg)
     try:
       parsed = response_model.model_validate_json(result.final_response)
     except Exception:

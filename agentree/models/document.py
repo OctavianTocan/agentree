@@ -36,14 +36,36 @@ class Document(BaseModel):
     return len(self.pages)
 
   @classmethod
-  def from_pages(cls, pdf_path: str | Path, pages: list[Page]) -> 'Document':
-    """Build a Document from a path and already-tagged pages."""
+  def from_pages(cls, pdf_path: str | Path, pages: list[Page]) -> Document:
+    """Build a Document from a path and already-tagged pages.
+
+    Args:
+      pdf_path: Path the pages were read from; supplies ``name``.
+      pages: Pages already tagged with physical indices.
+
+    Returns:
+      A Document over `pages`.
+
+    """
     path = Path(pdf_path)
     return cls(path=path, name=path.name, pages=pages)
 
-  # TODO: Add Document.load(pdf_path) -> Document classmethod (construction
-  # factory). Should extract text, call tag_physical_indices (keep that pure
-  # and module-level), then from_pages. Prefer moving extract/tag helpers to
-  # indexing/pdf_io.py if models↔indexing import cycles appear. Do not add
-  # mutating extract/tag instance methods on this frozen bag.
-  # See TODO.md "Document.load factory".
+  @classmethod
+  def load(cls, pdf_path: str | Path) -> Document:
+    """Load a document from a PDF path.
+
+    Args:
+        pdf_path: Path to the PDF file to load.
+
+    Returns:
+        A Document object.
+
+    """
+    # Imported here rather than at module scope to avoid a models ↔ indexing
+    # import cycle (indexing.pdf_index imports back into agentree.models).
+    from agentree.indexing.pdf_io import extract_text_and_tokens, tag_physical_indices
+
+    path: Path = Path(pdf_path)
+    raw_pages: list[tuple[str, int]] = extract_text_and_tokens(path)
+    pages: list[Page] = tag_physical_indices(raw_pages)
+    return cls.from_pages(path, pages)

@@ -2,12 +2,15 @@
 
 import os
 
-from openai_codex.generated.v2_all import Personality, ReasoningEffort
+from claude_agent_sdk import EffortLevel
+from openai_codex.generated.v2_all import Personality
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from agentree.types.aliases import (
   ClaudeModelAlias,
+  ClaudeModelId,
   CodexModelAlias,
+  CodexReasoningEffortAlias,
   CompletionClientAlias,
 )
 
@@ -24,14 +27,33 @@ class Settings(BaseSettings):
   # When false, skip AI completions and return empty structured responses.
   completions_enabled: bool = True
 
-  # The model to use for the Claude Agent SDK. Defaults to haiku.
-  claude_model: ClaudeModelAlias = 'haiku'
+  # The model to use for the Claude Agent SDK: a short alias or a full model ID.
+  claude_model: ClaudeModelAlias | ClaudeModelId = 'haiku'
+
+  # Model the Claude client retries with on overload/capacity errors (None to disable).
+  claude_fallback_model: ClaudeModelAlias | ClaudeModelId | None = None
+
+  # Hard USD ceiling per Claude query (None for no cap).
+  claude_max_budget_usd: float | None = None
+
+  # Cap on thinking tokens per Claude query; when set, thinking switches from
+  # adaptive to a fixed budget so the cap is honored (None for adaptive).
+  claude_max_thinking_tokens: int | None = None
 
   # The model to use for the Codex SDK.
   codex_model: CodexModelAlias = 'gpt-5.5'
 
+  # When true, Codex threads are not persisted (throwaway one-shot indexing turns).
+  codex_ephemeral: bool = True
+
   # The reasoning effort to use for the Codex client.
-  codex_reasoning_effort: ReasoningEffort = ReasoningEffort.medium
+  codex_reasoning_effort: CodexReasoningEffortAlias = 'none'
+
+  # Codex service tier (e.g. 'priority', 'flex'); None uses the model's default tier.
+  codex_service_tier: str | None = None
+
+  # The reasoning effort to use for the Claude client (guides adaptive thinking depth).
+  claude_reasoning_effort: EffortLevel = 'low'
 
   # The personality to use for the Codex client.
   personality: Personality = Personality.pragmatic

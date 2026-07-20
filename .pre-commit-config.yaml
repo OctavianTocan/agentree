@@ -5,7 +5,7 @@ repos:
       - id: ruff-format
         args: [agentree, tests]
         files: ^(agentree/|tests/)
-      - id: ruff
+      - id: ruff-check
         args: [agentree, tests]
         files: ^(agentree/|tests/)
 
@@ -19,12 +19,34 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=20000']
         # Sample PDFs under examples/documents/ are intentional (largest ~17MB).
+      # pyproject.toml now carries the whole lint/type contract: a syntax error in it
+      # silently disables the rules rather than failing loudly.
+      - id: check-toml
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: debug-statements
+        files: ^(agentree/|tests/)
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+        files: ^(agentree/|tests/)
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.22
+    hooks:
+      # Keep uv.lock honest when pyproject dependencies or requires-python change.
+      - id: uv-lock
 
   - repo: local
     hooks:
       - id: ty
         name: ty
-        entry: uv run ty check agentree tests
+        entry: uv run ty check --error-on-warning agentree tests
+        language: system
+        pass_filenames: false
+        files: ^(agentree/|tests/)
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
         language: system
         pass_filenames: false
         files: ^(agentree/|tests/)

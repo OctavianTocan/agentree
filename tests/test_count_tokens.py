@@ -1,10 +1,10 @@
-from agentree.indexing.pdf_index import count_tokens
+from agentree.indexing.pdf_io import count_tokens
 
 
-def test_counts_roughly_four_characters_per_token():
+def test_counts_roughly_four_characters_per_token() -> None:
   assert count_tokens('aaaa') == 1
   assert count_tokens('aaaaaaaa') == 2
 
 
-def test_empty_text_has_zero_tokens():
+def test_empty_text_has_zero_tokens() -> None:
   assert count_tokens('') == 0

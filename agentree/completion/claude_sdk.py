@@ -6,13 +6,17 @@ from typing import Any, Literal, TypedDict
 from claude_agent_sdk import (
   AssistantMessage,
   ClaudeAgentOptions,
+  ResultMessage,
   TextBlock,
+  ThinkingConfig,
   ToolUseBlock,
   query,
 )
 from loguru import logger
 
+from agentree.completion.pricing import log_claude_cost
 from agentree.config import settings
+from agentree.models import ClaudeReply
 from agentree.types.completion import ResponseModel
 
 
@@ -47,10 +51,21 @@ DISALLOWED_TOOLS: list[str] = [
   'Skill',
 ]
 
+# A token cap can't be expressed with adaptive thinking, so fall back to a fixed
+# budget when one is set; otherwise let the model size its own thinking.
+THINKING_CONFIG: ThinkingConfig = (
+  {'type': 'enabled', 'budget_tokens': settings.claude_max_thinking_tokens}
+  if settings.claude_max_thinking_tokens is not None
+  else {'type': 'adaptive'}
+)
+
 DEFAULT_OPTIONS = ClaudeAgentOptions(
   model=settings.claude_model,
+  fallback_model=settings.claude_fallback_model,
+  max_budget_usd=settings.claude_max_budget_usd,
   max_turns=1,
-  thinking={'type': 'disabled'},
+  thinking=THINKING_CONFIG,
+  effort=settings.claude_reasoning_effort,
   setting_sources=[],
   disallowed_tools=DISALLOWED_TOOLS,
 )
@@ -65,8 +80,13 @@ building a `ClaudeAgentOptions` from scratch.
 def strip_json_fence(response: str) -> str:
   """Remove a markdown JSON fence.
 
-  Removes a ```json ... ``` (or bare ``` ... ```) fence wrapped around a model
-  response, if present.
+  Args:
+    response: Raw model reply, optionally fenced.
+
+  Returns:
+    The response with a surrounding ```json ... ``` (or bare ``` ... ```) fence
+    removed, or unchanged if it was not fenced.
+
   """
   text = response.strip()
   if text.startswith('```'):
@@ -75,10 +95,7 @@ def strip_json_fence(response: str) -> str:
   return text.strip()
 
 
-async def _collect_claude_reply(
-  prompt: str,
-  options: ClaudeAgentOptions,
-) -> tuple[str, dict[str, Any] | None]:
+async def _collect_claude_reply(prompt: str, options: ClaudeAgentOptions) -> ClaudeReply:
   """Collect text and/or StructuredOutput payload from one Claude query.
 
   Args:
@@ -86,15 +103,18 @@ async def _collect_claude_reply(
     options: SDK options for the query.
 
   Returns:
-    `(response_text, structured_output)` where `structured_output` is set when
-    the model used the StructuredOutput tool.
+    The query's collected text, structured output, and cost/usage.
 
   """
   response_text = ''
   structured_output: dict[str, Any] | None = None
+  result: ResultMessage | None = None
 
   try:
     async for message in query(prompt=prompt, options=options):
+      if isinstance(message, ResultMessage):
+        result = message
+        continue
       if not isinstance(message, AssistantMessage):
         continue
       for block in message.content:
@@ -108,7 +128,12 @@ async def _collect_claude_reply(
       raise
     logger.opt(exception=True).debug('Claude error ignored because a reply was already captured')
 
-  return response_text, structured_output
+  return ClaudeReply(
+    text=response_text,
+    structured_output=structured_output,
+    cost_usd=result.total_cost_usd if result is not None else None,
+    usage=result.usage if result is not None else None,
+  )
 
 
 def _parse_claude_reply(
@@ -163,7 +188,8 @@ async def generate_structured_completion(
   }
   options = dataclasses.replace(options, output_format=output_format)
 
-  response_text, structured_output = await _collect_claude_reply(prompt, options)
-  parsed = _parse_claude_reply(response_model, response_text, structured_output)
+  reply = await _collect_claude_reply(prompt, options)
+  parsed = _parse_claude_reply(response_model, reply.text, reply.structured_output)
+  log_claude_cost(reply.cost_usd, reply.usage)
   logger.debug('Claude final_response:\n{}', parsed.model_dump_json(indent=2))
   return parsed

@@ -5,7 +5,7 @@ description = "Index PDF documents into a hierarchical section tree for agent re
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 authors = [{ name = "Octavian Tocan", email = "contact@octaviantocan.com" }]
 keywords = ["pdf", "indexing", "rag", "agents", "claude", "codex", "mcp", "vectorless"]
 classifiers = [
@@ -13,15 +13,12 @@ classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Text Processing :: Indexing",
 ]
 
 dependencies = [
-  "claude-agent-sdk>=0.2.110",
+  "claude-agent-sdk>=0.2.118",
   "httpx>=0.28.1",
   "loguru>=0.7.3",
   "mcp[cli]>=1.28.1",
@@ -59,10 +56,14 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+addopts = ["--strict-markers", "--strict-config", "-ra"]
+# An xfail that starts passing is a lie about the codebase: fail so the marker gets removed.
+xfail_strict = true
+filterwarnings = ["error"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py314"
 exclude = [".agent", "examples", "PageIndex", "docs", "lessons", "reference", "learning-records"]
 indent-width = 2
 
@@ -73,14 +74,30 @@ docstring-code-format = true
 line-ending = "lf"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "N", "D", "S", "RUF", "PT", "C90"]
-ignore = [
-  "D203",   # Incompatible with D211 (no-blank-line-before-class)
-  "D213",   # Incompatible with D212 (multi-line-summary-first-line)
-  "D401",   # Imperative mood docstrings (too opinionated)
-  "RUF001", # Ambiguous unicode character (we use '›' separator)
-  "RUF002", # Ambiguous unicode character in docstring
+# Preview gates DOC, but blanket-enabling it also turns on E111/E114, which demand
+# 4-space indents and contradict `indent-width = 2`. Opt in per-rule instead.
+preview = true
+explicit-preview-rules = true
+select = [
+  "E", "F", "I", "UP", "B", "N", "D", "S", "RUF", "PT", "C90", "ANN",
+  "A", "ARG", "C4", "DTZ", "EM", "FBT", "FURB", "G", "ICN", "INP", "LOG",
+  "PERF", "PL", "PTH", "RET", "RSE", "SIM", "SLF", "T20", "TID", "TRY",
+  # pydoclint (preview): docstrings must match the signature they document.
+  # Exact codes, since `explicit-preview-rules` ignores prefix selection.
+  "DOC201", "DOC202", "DOC402", "DOC403", "DOC501", "DOC502",
 ]
+ignore = [
+  "D401",    # Imperative mood docstrings (too opinionated)
+  "RUF001",  # Ambiguous unicode character (we use '›' separator)
+  "RUF002",  # Ambiguous unicode character in docstring
+  "TRY003",  # Would force a custom exception class per message; EM101/EM102 already cover this
+  "PLC0415", # Function-level imports are deliberate here: lazy SDK loads and import-cycle breaks
+]
+
+[tool.ruff.lint.pydocstyle]
+# Matches the Args:/Returns:/Raises: style already in use, and turns off the
+# D203/D213 pairs that contradict it (previously ignored by hand).
+convention = "google"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -88,7 +105,62 @@ max-complexity = 10
 [tool.ruff.lint.per-file-ignores]
 "agentree/indexing/prompts.py" = ["E501"]
 "agentree/storage/sqlite.py" = ["S608"]
-"tests/**/*.py" = ["S101", "D100", "D101", "D102", "D103", "D104", "PT011", "RUF007"]
+"tests/**/*.py" = [
+  "S101", "D100", "D101", "D102", "D103", "D104", "PT011", "RUF007",
+  "INP001",  # tests/ is a pytest rootdir, not an importable package
+  "PLR2004", # Literal expected values are the point of an assertion
+  "DOC",     # Test bodies are the documentation; no Returns:/Raises: prose needed
+]
+
+[tool.ty.environment]
+# Check against the floor in `requires-python`, not whatever the dev venv happens
+# to be, so newer-than-floor APIs can't slip past CI and break installs.
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["agentree", "tests"]
+
+[tool.ty.rules]
+# Every rule ty ships at `warn`/`ignore`, raised to `error`. The codebase is clean
+# against all of them today, so this only constrains new code. Listed explicitly
+# rather than via `--error all` so the editor's LSP agrees with CI, and so a ty
+# upgrade adding a rule can't fail the build without a visible edit here.
+
+# Bare `list` / `dict` silently become `Unknown`; require the parameters.
+missing-type-argument = "error"
+missing-override-decorator = "error"
+ambiguous-protocol-member = "error"
+invalid-enum-member-annotation = "error"
+invalid-legacy-positional-parameter = "error"
+invalid-named-tuple-override = "error"
+mismatched-type-name = "error"
+unsupported-base = "error"
+unsupported-dynamic-base = "error"
+useless-overload-body = "error"
+redundant-cast = "error"
+redundant-final-classvar = "error"
+ineffective-final = "error"
+subclass-of-dataclass-with-order = "error"
+unused-awaitable = "error"
+deprecated = "error"
+division-by-zero = "error"
+unresolved-global = "error"
+undefined-reveal = "error"
+experimental-syntax = "error"
+
+# `possibly-*` are ignore-by-default because they can false-positive on
+# conditionally-defined names. Clean here; suppress per-line if one misfires.
+possibly-unresolved-reference = "error"
+possibly-missing-import = "error"
+possibly-missing-attribute = "error"
+possibly-missing-implicit-call = "error"
+possibly-missing-submodule = "error"
+
+# Keep suppression comments honest: no stale, malformed, or unknown-rule ignores.
+unused-ignore-comment = "error"
+unused-type-ignore-comment = "error"
+invalid-ignore-comment = "error"
+ignore-comment-unknown-rule = "error"
 
 [tool.uv.sources]
 openai-codex = { git = "https://github.com/openai/codex.git", subdirectory = "sdk/python" }

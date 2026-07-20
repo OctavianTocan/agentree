@@ -1,12 +1,14 @@
 """Task-specific logic for extracting a document outline without a table of contents."""
 
+from loguru import logger
+
 from agentree.completion import StructuredCompletionClient, create_completion_client
 from agentree.indexing.prompts import (
   CHECK_PAGE_FOR_TOC_PROMPT,
   EXTRACT_OUTLINE_CONTINUATION_PROMPT,
   EXTRACT_OUTLINE_INITIAL_PROMPT,
 )
-from agentree.models import BoolModel, OutlineSection, OutlineSectionList, Page
+from agentree.models import BoolModel, Outline, OutlineSection, Page
 
 # TODO: Add TOC-found helpers used by pdf_index.index when toc_pages is non-empty:
 #   - extract_toc_content(pages) → raw TOC text (or merge into check_page_for_toc)
@@ -38,7 +40,7 @@ async def check_page_for_toc(page: Page, client: StructuredCompletionClient | No
 
 async def extract_outline_initial(
   chunk_text: str, client: StructuredCompletionClient | None = None
-) -> list[OutlineSection]:
+) -> Outline:
   """Extract the draft outline from the first chunk of a document.
 
   Args:
@@ -50,40 +52,36 @@ async def extract_outline_initial(
 
   """
   client: StructuredCompletionClient = client or create_completion_client()
-  result: OutlineSectionList = await client.complete(
+  result: Outline = await client.complete(
     chunk_text,
-    OutlineSectionList,
+    Outline,
     system_prompt=EXTRACT_OUTLINE_INITIAL_PROMPT,
   )
-  return result.sections
+  return result
 
 
 async def extract_outline_continuation(
   chunk_text: str,
-  previous_outline: list[OutlineSection],
+  spine: list[OutlineSection],
   client: StructuredCompletionClient | None = None,
-) -> list[OutlineSection]:
+) -> Outline:
   """Continue the draft outline into the next chunk, given what's been extracted so far.
 
   Args:
       chunk_text: Page-tagged text of the current chunk.
-      previous_outline: Sections already extracted from earlier chunks.
+      spine: Open-ancestor path from earlier chunks (rightmost outline path).
       client: Optional completion client override.
 
   Returns:
       Only the new sections found in this chunk, in document order.
 
   """
-  client: StructuredCompletionClient = client or create_completion_client()
-  previous_outline_json: str = OutlineSectionList(sections=previous_outline).model_dump_json(
-    indent=2
-  )
-  prompt = (
-    f'Previous outline:\n{previous_outline_json}\n\nCurrent part of the document:\n{chunk_text}'
-  )
-  result: OutlineSectionList = await client.complete(
+  spine_json = Outline(sections=spine).model_dump_json(indent=2)
+  logger.debug('continuation spine:\n{}', spine_json)
+  prompt = f'Previous tree structure:\n{spine_json}\n\nCurrent part of the document:\n{chunk_text}'
+  result: Outline = await (client or create_completion_client()).complete(
     prompt,
-    OutlineSectionList,
+    Outline,
     system_prompt=EXTRACT_OUTLINE_CONTINUATION_PROMPT,
   )
-  return result.sections
+  return result

@@ -7,7 +7,9 @@
   "python.testing.pytestArgs": [
     "tests"
   ],
-  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
   "python.formatting.provider": "none",
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
@@ -75,5 +77,5 @@
     "**/.agent": true,
     "**/uv.lock": true
   },
-  "cursorpyright.analysis.typeCheckingMode": "off"
+  "cursorpyright.analysis.typeCheckingMode": "standard"
 }

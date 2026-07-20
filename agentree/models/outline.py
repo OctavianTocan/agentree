@@ -6,9 +6,15 @@ from agentree.models.base import StrictModel
 
 
 class SectionRef(BaseModel):
-  """structure code + title — shared by draft and ranged-flat stages."""
+  """Depth + title — shared by draft and ranged-flat stages."""
 
-  structure: str = Field(description='Dotted hierarchy code, e.g. "1", "1.1", "2".')
+  depth: int = Field(
+    description=(
+      'How deeply the section is nested: 0 for a top-level section, 1 for a subsection of '
+      'one, 2 for a subsection of that, and so on. Base it on the visual hierarchy, not on '
+      "the document's own numbering."
+    )
+  )
   title: str = Field(description='Section heading text.')
 
 
@@ -17,27 +23,35 @@ class OutlineSection(SectionRef, StrictModel):
 
   Example::
 
-      {'structure': '1.1', 'title': 'Key Points', 'physical_index': 1}
+      {'depth': 1, 'title': 'Key Points', 'physical_index': 1}
   """
 
-  physical_index: int | None = Field(
-    default=None,
+  physical_index: int = Field(
+    default=1,
     description=(
       '1-indexed physical page number where this section starts, taken from the'
-      '`<physical_index_N>` tags in the input text. null if it does not start in this chunk.'
+      '`<physical_index_N>` tags in the input text.'
+    ),
+  )
+  starts_at_top: bool = Field(
+    default=False,
+    description=(
+      'True if this heading is the very first content on its page. '
+      'If any text from a previous section comes before the title on that page, set it to false. '
     ),
   )
 
 
-class OutlineSectionList(StrictModel):
+# TODO: Isn't this a model? This comes from the LLM, no?
+class Outline(StrictModel):
   """Flat list of outline sections extracted from one chunk of the document.
 
   Example::
 
       {
         'sections': [
-          {'structure': '1', 'title': 'Results', 'physical_index': 1},
-          {'structure': '1.1', 'title': 'Key Points', 'physical_index': 1},
+          {'depth': 0, 'title': 'Results', 'physical_index': 1},
+          {'depth': 1, 'title': 'Key Points', 'physical_index': 1},
         ]
       }
   """
@@ -50,12 +64,12 @@ class OutlineSectionList(StrictModel):
 class FlatSection(SectionRef):
   """Draft row after page ranges are derived; still flat (not nested).
 
-  Not an LLM response schema — assembly-only. ``structure`` is kept so nesting
-  can find the parent (``"1.1"`` → ``"1"``).
+  Not an LLM response schema — assembly-only. ``depth`` is kept so nesting can
+  find the parent (``0`` → ``1``).
 
   Example::
 
-      {'structure': '1', 'title': 'Results', 'start_index': 1, 'end_index': 1}
+      {'depth': 0, 'title': 'Results', 'start_index': 1, 'end_index': 1}
   """
 
   start_index: int = Field(description='First physical PDF page (1-indexed) this section spans.')

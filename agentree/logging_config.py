@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import sys
-from typing import Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from loguru import logger
+
+if TYPE_CHECKING:
+  # Loguru exports `Record` from its stub only; it does not exist at runtime.
+  from loguru import Record
 
 CONSOLE_FORMAT = (
   '<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | '
@@ -17,7 +22,7 @@ CONSOLE_FORMAT = (
 FILE_FORMAT = '{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}'
 
 
-def _format_with_extra(base_format: str, *, colorize_extra: bool) -> Any:
+def _format_with_extra(base_format: str, *, colorize_extra: bool) -> Callable[[Record], str]:
   """Build a Loguru format callable that appends bound extras when present.
 
   Args:
@@ -29,7 +34,7 @@ def _format_with_extra(base_format: str, *, colorize_extra: bool) -> Any:
 
   """
 
-  def formatter(record: dict[str, Any]) -> str:
+  def formatter(record: Record) -> str:
     if record['extra']:
       extra_part = ' | <dim>{extra}</dim>' if colorize_extra else ' | {extra}'
       return base_format + extra_part + '\n'

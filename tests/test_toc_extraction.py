@@ -34,24 +34,22 @@ This section describes our results.
 
 
 @requires_live_claude
-def test_extract_outline_initial_finds_overview_section():
+def test_extract_outline_initial_finds_overview_section() -> None:
   client = create_completion_client('claude')
-  sections = asyncio.run(extract_outline_initial(FIRST_CHUNK, client=client))
+  outline = asyncio.run(extract_outline_initial(FIRST_CHUNK, client=client))
 
-  assert any(section.title.strip().lower() == 'overview' for section in sections)
-  assert all(isinstance(section, OutlineSection) for section in sections)
+  assert any(section.title.strip().lower() == 'overview' for section in outline.sections)
+  assert all(isinstance(section, OutlineSection) for section in outline.sections)
 
 
 @requires_live_claude
-def test_extract_outline_continuation_finds_new_section_not_in_previous():
+def test_extract_outline_continuation_finds_new_section_not_in_previous() -> None:
   client = create_completion_client('claude')
-  previous_outline = [
-    OutlineSection(structure='1', title='Overview', physical_index=2),
-    OutlineSection(structure='2', title='Methods', physical_index=None),
+  spine = [
+    OutlineSection(depth=0, title='Overview', physical_index=2),
+    OutlineSection(depth=0, title='Methods', physical_index=5),
   ]
 
-  new_sections = asyncio.run(
-    extract_outline_continuation(SECOND_CHUNK, previous_outline, client=client)
-  )
+  new_outline = asyncio.run(extract_outline_continuation(SECOND_CHUNK, spine, client=client))
 
-  assert any(section.title.strip().lower() == 'results' for section in new_sections)
+  assert any(section.title.strip().lower() == 'results' for section in new_outline.sections)
