@@ -33,6 +33,13 @@ class OutlineSection(SectionRef, StrictModel):
       '`<physical_index_N>` tags in the input text.'
     ),
   )
+  starts_at_top: bool = Field(
+    default=False,
+    description=(
+      'True if this heading is the very first content on its page. '
+      'If any text from a previous section comes before the title on that page, set it to false. '
+    ),
+  )
 
 
 # TODO: Isn't this a model? This comes from the LLM, no?

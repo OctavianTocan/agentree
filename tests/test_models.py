@@ -46,11 +46,17 @@ def test_outline_section_physical_index_defaults_to_one() -> None:
   assert section.physical_index == 1
 
 
+def test_outline_section_starts_at_top_defaults_to_false() -> None:
+  section = OutlineSection(depth=0, title='Overview')
+
+  assert section.starts_at_top is False
+
+
 def test_outline_section_list_round_trips_through_json() -> None:
   sections = Outline(
     sections=[
-      OutlineSection(depth=0, title='Overview', physical_index=7),
-      OutlineSection(depth=0, title='Methods', physical_index=9),
+      OutlineSection(depth=0, title='Overview', physical_index=7, starts_at_top=True),
+      OutlineSection(depth=0, title='Methods', physical_index=9, starts_at_top=False),
     ]
   )
 

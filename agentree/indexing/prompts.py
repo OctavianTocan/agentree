@@ -26,6 +26,8 @@ EXTRACT_OUTLINE_INITIAL_PROMPT = """
 
     For the physical_index, you need to extract the physical index of the start of the section from the text, and set `physical_index` to the integer `X` (e.g `2`, not `<physical_index_2>`).
 
+    For starts_at_top, set it to true only if the section's title is the very first content on its page. If any text from a previous section comes before the title on that page, set it to false. Do fuzzy matching and ignore spacing or line-break inconsistencies.
+
     Directly return the final JSON structure. Do not output anything else.
     You should NOT call any tools for this task."""
 
@@ -41,6 +43,8 @@ EXTRACT_OUTLINE_CONTINUATION_PROMPT = """
     The provided text contains tags like <physical_index_X> and <physical_index_X> to indicate the start and end of page X. \
 
     For the physical_index, you need to extract the physical index of the start of the section from the text, and set `physical_index` to the integer `X` (e.g `2`, not `<physical_index_2>`).
+
+    For starts_at_top, set it to true only if the section's title is the very first content on its page. If any text from a previous section comes before the title on that page, set it to false. Do fuzzy matching and ignore spacing or line-break inconsistencies.
 
     Directly return only the additional sections found in the current part - do not repeat sections already present in the previous tree structure. Do not output anything else.
     You should NOT call any tools for this task."""

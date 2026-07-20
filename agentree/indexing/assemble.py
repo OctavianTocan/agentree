@@ -1,15 +1,10 @@
 """Pure flat-outline → nested Tree assembly (no I/O, no LLM calls)."""
 
-import re
-
-from loguru import logger
-
 from agentree.models import FlatSection, Outline, OutlineSection
 from agentree.models.document import Document
 from agentree.models.tree import Node
 
 _NODE_ID_WIDTH = 4
-_PHYSICAL_INDEX_TAG = re.compile(r'<physical_index_\d+>')
 
 
 def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSection]:
@@ -36,8 +31,10 @@ def outline_to_flat_sections(outline: Outline, doc: Document) -> list[FlatSectio
       end_index = doc.last_page
     else:
       nxt: OutlineSection = sections[i + 1]
-      clean_break = _appears_at_page_start(nxt.title, doc.pages[nxt.physical_index - 1].content)
-      end_index = nxt.physical_index - 1 if clean_break else nxt.physical_index
+      # This makes sense because we want to extend the current section only until either the page
+      # before the next section starts, or the same page if the next section doesn't start at the
+      # top of the page.
+      end_index = nxt.physical_index - 1 if nxt.starts_at_top else nxt.physical_index
       end_index = max(section.physical_index, end_index)
 
     flat_sections.append(
@@ -132,14 +129,3 @@ def open_spine(sections: list[OutlineSection]) -> list[OutlineSection]:
       stack.pop()
     stack.append(section)
   return stack
-
-
-def _appears_at_page_start(title: str, page_text: str, window: int = 200) -> bool:
-  head = _normalize(page_text[:window])
-  logger.debug('appears_at_page_start head={!r} title={!r}', head, title)
-  return _normalize(title) in head
-
-
-def _normalize(text: str) -> str:
-  untagged = _PHYSICAL_INDEX_TAG.sub(' ', text)
-  return ' '.join(untagged.casefold().split())
