@@ -7,7 +7,16 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.14"
 authors = [{ name = "Octavian Tocan", email = "contact@octaviantocan.com" }]
-keywords = ["pdf", "indexing", "rag", "agents", "claude", "codex", "mcp", "vectorless"]
+keywords = [
+  "pdf",
+  "indexing",
+  "rag",
+  "agents",
+  "claude",
+  "codex",
+  "mcp",
+  "vectorless",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -19,6 +28,7 @@ classifiers = [
 
 dependencies = [
   "claude-agent-sdk>=0.2.128",
+  "fastmcp>=3.4.5",
   "httpx>=0.28.1",
   "loguru>=0.7.3",
   "mcp[cli]>=1.28.1",
@@ -37,7 +47,8 @@ Changelog = "https://github.com/OctavianTocan/agentree/blob/main/CHANGELOG.md"
 Security = "https://github.com/OctavianTocan/agentree/blob/main/SECURITY.md"
 
 [project.scripts]
-agentree = "agentree.cli:app"
+cli = "agentree.cli:app"
+mcp = "agentree.mcp.server:mcp.run"
 
 [build-system]
 requires = ["hatchling"]
@@ -47,12 +58,7 @@ build-backend = "hatchling.build"
 packages = ["agentree"]
 
 [dependency-groups]
-dev = [
-  "pre-commit>=4.6.1",
-  "pytest>=9.1.1",
-  "ruff>=0.16.0",
-  "ty>=0.0.65",
-]
+dev = ["pre-commit>=4.6.1", "pytest>=9.1.1", "ruff>=0.16.0", "ty>=0.0.65"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -64,7 +70,15 @@ filterwarnings = ["error"]
 [tool.ruff]
 line-length = 100
 target-version = "py314"
-exclude = [".agent", "examples", "PageIndex", "docs", "lessons", "reference", "learning-records"]
+exclude = [
+  ".agent",
+  "examples",
+  "PageIndex",
+  "docs",
+  "lessons",
+  "reference",
+  "learning-records",
+]
 indent-width = 2
 
 [tool.ruff.format]
@@ -79,12 +93,47 @@ line-ending = "lf"
 preview = true
 explicit-preview-rules = true
 select = [
-  "E", "F", "I", "UP", "B", "N", "D", "S", "RUF", "PT", "C90", "ANN",
-  "A", "ARG", "C4", "DTZ", "EM", "FBT", "FURB", "G", "ICN", "INP", "LOG",
-  "PERF", "PL", "PTH", "RET", "RSE", "SIM", "SLF", "T20", "TID", "TRY",
+  "E",
+  "F",
+  "I",
+  "UP",
+  "B",
+  "N",
+  "D",
+  "S",
+  "RUF",
+  "PT",
+  "C90",
+  "ANN",
+  "A",
+  "ARG",
+  "C4",
+  "DTZ",
+  "EM",
+  "FBT",
+  "FURB",
+  "G",
+  "ICN",
+  "INP",
+  "LOG",
+  "PERF",
+  "PL",
+  "PTH",
+  "RET",
+  "RSE",
+  "SIM",
+  "SLF",
+  "T20",
+  "TID",
+  "TRY",
   # pydoclint (preview): docstrings must match the signature they document.
   # Exact codes, since `explicit-preview-rules` ignores prefix selection.
-  "DOC201", "DOC202", "DOC402", "DOC403", "DOC501", "DOC502",
+  "DOC201",
+  "DOC202",
+  "DOC402",
+  "DOC403",
+  "DOC501",
+  "DOC502",
 ]
 ignore = [
   "D401",    # Imperative mood docstrings (too opinionated)
@@ -106,7 +155,14 @@ max-complexity = 10
 "agentree/indexing/prompts.py" = ["E501"]
 "agentree/storage/sqlite.py" = ["S608"]
 "tests/**/*.py" = [
-  "S101", "D100", "D101", "D102", "D103", "D104", "PT011", "RUF007",
+  "S101",
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "PT011",
+  "RUF007",
   "INP001",  # tests/ is a pytest rootdir, not an importable package
   "PLR2004", # Literal expected values are the point of an assertion
   "DOC",     # Test bodies are the documentation; no Returns:/Raises: prose needed
