@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Create release PR / GitHub Release
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           # Prefer a PAT/App token if branch rules require reviews or block
           # github-actions[bot]. Otherwise GITHUB_TOKEN is enough to open the
