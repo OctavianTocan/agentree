@@ -4,6 +4,16 @@ from typing import Self
 
 from pydantic import BaseModel, Field
 
+from agentree.models.base import StrictModel
+
+
+class DocumentDescription(StrictModel):
+  """LLM-generated one-line description distinguishing this document from others."""
+
+  description: str = Field(
+    description='LLM-generated one-line description distinguishing this document from others.'
+  )
+
 
 class Node(BaseModel):
   """One section of a document; may nest child sections.
@@ -50,7 +60,9 @@ class Tree(BaseModel):
 
       {
         'doc_name': 'q1-fy25-earnings.pdf',
-        'doc_description': 'Q1 FY25 earnings release with results and outlook.',
+        'doc_description': {
+          'description': 'Q1 FY25 earnings release with results and outlook.',
+        },
         'nodes': [
           {
             'title': 'Results',
@@ -73,8 +85,7 @@ class Tree(BaseModel):
   """
 
   doc_name: str = Field(description='Filename of the indexed document.')
-  # TODO: Populate via generate_doc_description once tree assembly exists.
-  doc_description: str | None = Field(
+  doc_description: DocumentDescription | None = Field(
     default=None,
     description='LLM-generated one-line description distinguishing this document from others.',
   )

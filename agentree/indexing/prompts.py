@@ -48,3 +48,23 @@ EXTRACT_OUTLINE_CONTINUATION_PROMPT = """
 
     Directly return only the additional sections found in the current part - do not repeat sections already present in the previous tree structure. Do not output anything else.
     You should NOT call any tools for this task."""
+
+GENERATE_DOC_DESCRIPTION_PROMPT = """
+    You are an expert in generating a one-line description of a document.
+
+    You are given a tree structure of the document.
+    Your task is to generate a one-line description of the document.
+
+    Return the description. Do not output anything else.
+    You should NOT call any tools for this task.
+    """
+
+GENERATE_NODE_SUMMARY_PROMPT = """
+    You are an expert in generating a summary of a node.
+
+    You are given a node of the document.
+    Your task is to generate a summary of the node.
+
+    Return the summary. Do not output anything else.
+    You should NOT call any tools for this task.
+    """
