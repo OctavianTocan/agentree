@@ -42,8 +42,6 @@ def main(
   logger.bind(pdf_path=pdf_path).info('Processing PDF')
   # TODO: Persist to a real store (init_db, store_document, --db_path) once
   # storage is wired; this JSON dump is the stopgap.
-  # TODO: MCP server entrypoint is separate (see TODO.md); this CLI stays the
-  # indexer front door.
   tree: Tree = index(pdf_path)
   out_path = save_tree(tree, out_dir)
   logger.bind(out_path=str(out_path)).info('Wrote tree JSON')

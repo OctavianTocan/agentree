@@ -10,11 +10,15 @@ from agentree.models import (
   Page,
   Tree,
 )
+from agentree.models.tree import DocumentDescription
 
 
 def test_tree_round_trips_through_json() -> None:
   tree = Tree(
     doc_name='report.pdf',
+    doc_description=DocumentDescription(
+      description='Synthetic report used for model round-trip tests.',
+    ),
     nodes=[
       Node(title='Preface', start_index=1, end_index=4, id='0000'),
       Node(

@@ -5,6 +5,7 @@ import math
 
 from loguru import logger
 
+from agentree.completion.factory import create_completion_client
 from agentree.config import settings
 from agentree.indexing.assemble import (
   assign_node_ids,
@@ -12,14 +13,19 @@ from agentree.indexing.assemble import (
   open_spine,
   outline_to_flat_sections,
 )
+from agentree.indexing.prompts import (
+  GENERATE_DOC_DESCRIPTION_PROMPT,
+  GENERATE_NODE_SUMMARY_PROMPT,
+)
 from agentree.indexing.toc_extraction import (
   check_page_for_toc,
   extract_outline_continuation,
   extract_outline_initial,
 )
 from agentree.models import Document, Outline, Page, PageChunk, Tree
+from agentree.models.nodes import NodeSummary
 from agentree.models.outline import FlatSection
-from agentree.models.tree import Node
+from agentree.models.tree import DocumentDescription, Node
 
 # The maximum number of tokens per chunk.
 MAX_TOKENS_PER_CHUNK = settings.max_tokens_per_chunk
@@ -41,54 +47,53 @@ def index(pdf_path: str) -> Tree:
   """
   outline: Outline = Outline(sections=[])
   # Load the document from the PDF path.
-  doc: Document = Document.load(pdf_path)
+  document: Document = Document.load(pdf_path)
 
   logger.bind(
-    doc_name=doc.name,
-    total_page_number=doc.last_page,
-    total_token=sum(page.tokens for page in doc.pages),
+    doc_name=document.name,
+    total_page_number=document.last_page,
+    total_token=sum(page.tokens for page in document.pages),
   ).info('Loaded PDF document')
 
-  # Check if the document has a table of contents.
-  toc_pages: list[tuple[int, Page]] = find_toc_pages(doc.pages)
-
   # --- DOCUMENT INDEXING WITH TABLE OF CONTENTS --- #
-  if toc_pages:
-    logger.bind(toc_page_count=len(toc_pages)).debug('Found TOC pages')
-    # TODO: TOC-found path (MISSION.md). Implement in toc_extraction.py + here:
-    #   1. Extract TOC text from toc_pages (optionally merge with detect call).
-    #   2. Ask the LLM for structured JSON directly (no toc_transformer loop).
-    #   3. Map TOC entries → physical PDF page indices (simple mapping first;
-    #      PageIndex offset/verify cascade is deferred — see TODO.md).
-    #   4. Assign outline from that result, then fall through to
-    #      flat→Tree assembly below (same as the no-TOC path).
-    ...
-  # --- DOCUMENT INDEXING WITHOUT TABLE OF CONTENTS --- #
-  else:
-    # Chunk the pages into chunks with overlap between them.
-    chunk_pages: list[PageChunk] = chunk_pages_with_overlap(doc.pages)
-    logger.bind(chunk_count=len(chunk_pages)).info('Chunked pages for indexing')
+  # toc_pages: list[tuple[int, Page]] = find_toc_pages(document.pages)
+  # if toc_pages:
+  #   logger.bind(toc_page_count=len(toc_pages)).debug('Found TOC pages')
+  #   # TODO: TOC-found path (MISSION.md). Implement in toc_extraction.py + here:
+  #   #   1. Extract TOC text from toc_pages (optionally merge with detect call).
+  #   #   2. Ask the LLM for structured JSON directly (no toc_transformer loop).
+  #   #   3. Map TOC entries → physical PDF page indices (simple mapping first;
+  #   #      PageIndex offset/verify cascade is deferred — see TODO.md).
+  #   #   4. Assign outline from that result, then fall through to
+  #   #      flat→Tree assembly below (same as the no-TOC path).
+  #   ...
+  # # --- DOCUMENT INDEXING WITHOUT TABLE OF CONTENTS --- #
+  # else:
+  # Chunk the pages into chunks with overlap between them.
+  chunk_pages: list[PageChunk] = chunk_pages_with_overlap(document.pages)
+  logger.bind(chunk_count=len(chunk_pages)).info('Chunked pages for indexing')
 
-    outline = asyncio.run(extract_outline_initial(chunk_pages[0].content))
-    logger.info(
-      'initial_outline:\n{}',
-      outline.model_dump_json(indent=2),
+  outline = asyncio.run(extract_outline_initial(chunk_pages[0].content))
+  logger.info(
+    'initial_outline:\n{}',
+    outline.model_dump_json(indent=2),
+  )
+
+  # Add all the continuation chunks to the outline.
+  for chunk in chunk_pages[1:]:
+    continuation: Outline = asyncio.run(
+      extract_outline_continuation(chunk.content, open_spine(sections=outline.sections))
     )
+    logger.info(
+      'continuation_outline:\n{}',
+      continuation.model_dump_json(indent=2),
+    )
+    outline = Outline(sections=outline.sections + continuation.sections)
 
-    # Add all the continuation chunks to the outline.
-    for chunk in chunk_pages[1:]:
-      continuation: Outline = asyncio.run(
-        extract_outline_continuation(chunk.content, open_spine(sections=outline.sections))
-      )
-      logger.info(
-        'continuation_outline:\n{}',
-        continuation.model_dump_json(indent=2),
-      )
-      outline = Outline(sections=outline.sections + continuation.sections)
-
-  # TODO: generate
-  # doc_description, and return Tree (+ doc.pages)
-  return assemble_tree(outline, doc)
+  tree = assemble_tree(outline, document)
+  generate_node_summaries(tree.nodes, document)
+  tree.doc_description = generate_doc_description(tree.nodes)
+  return tree
 
 
 def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
@@ -125,6 +130,47 @@ def find_toc_pages(pages: list[Page]) -> list[tuple[int, Page]]:
   return toc_pages
 
 
+def generate_node_summaries(nodes: list[Node], doc: Document) -> None:
+  """Generate summaries for a list of nodes.
+
+  Args:
+    nodes: The nodes to generate summaries for.
+    doc: The document to generate summaries for.
+  """
+  # Generate node summaries.
+  for node in nodes:
+    node_text = ''.join([page.content for page in doc.pages[node.start_index - 1 : node.end_index]])
+    # TODO: Optionally retain truncated node text (e.g. first 1000 chars) on node.text.
+    # node.text = node_text[:1000]
+    # TODO: Move this completion into a dedicated generation helper.
+    summary: NodeSummary = asyncio.run(
+      create_completion_client().complete(
+        node_text, NodeSummary, system_prompt=GENERATE_NODE_SUMMARY_PROMPT
+      )
+    )
+    node.summary = summary.summary
+    logger.bind(node_id=node.id, node_summary=node.summary).info('Generated node summary')
+    # Generate summaries for the node's children.
+    if node.children:
+      generate_node_summaries(nodes=node.children, doc=doc)
+
+
+def generate_doc_description(nodes: list[Node]) -> DocumentDescription:
+  """Generate a one-line document description from the assembled node tree.
+
+  Args:
+    nodes: Top-level nodes of the assembled tree.
+
+  Returns:
+    The LLM-generated document description.
+  """
+  return asyncio.run(
+    create_completion_client().complete(
+      str(nodes), DocumentDescription, system_prompt=GENERATE_DOC_DESCRIPTION_PROMPT
+    )
+  )
+
+
 def assemble_tree(outline: Outline, doc: Document) -> Tree:
   """Assemble a nested Tree from a flat draft outline and PDF Document facts.
 
@@ -140,8 +186,7 @@ def assemble_tree(outline: Outline, doc: Document) -> Tree:
   flat_sections: list[FlatSection] = outline_to_flat_sections(outline=outline, doc=doc)
   nodes: list[Node] = flat_sections_to_nodes(flat_sections)
   assign_node_ids(nodes)
-  tree: Tree = Tree(doc_name=doc.name, nodes=nodes)
-  return tree
+  return Tree(doc_name=doc.name, nodes=nodes)
 
 
 def chunk_pages_with_overlap(pages: list[Page], overlap_page: int = 1) -> list[PageChunk]:

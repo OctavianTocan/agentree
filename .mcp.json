@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "agentree": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "/mnt/work/code/personal/agentree",
+        "python",
+        "-m",
+        "agentree.mcp.server"
+      ],
+      "env": {}
+    }
+  }
+}

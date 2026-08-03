@@ -42,11 +42,11 @@ store it. Lesson: `lessons/0005-assemble-tree-and-markdown-store.md`.
       `Tree(doc_name=doc.name, structure=nodes)`. Call from no-TOC (and later
       TOC) path. See `reference/pageindex-tree-product.md`.
       (`assemble_tree(outline, doc)`)
-- [ ] **Expose per-page text from `index()`** — `Document.pages` already
+- [x] **Expose per-page text from `index()`** — `Document.pages` already
       holds tagged pages; they never leave `index()`. Storage and
       `get_page_content` need them. Return pages alongside the tree (or a
       small result type). (`agentree/indexing/pdf_index.py`)
-- [ ] **`doc_description`** — one LLM call over the (text-stripped) tree so
+- [x] **`doc_description`** — one LLM call over the (text-stripped) tree so
       an agent can pick this doc out of many. Field exists on `Tree`; no
       generator yet. (`agentree/indexing/`, `models/tree.py`; PageIndex
       `generate_doc_description`)

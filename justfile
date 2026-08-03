@@ -1,5 +1,8 @@
 run *args:
-  uv run agentree {{args}}
+  uv run cli {{args}}
+
+mcp *args:
+  uv run mcp {{args}}
 
 # Install agentree onto PATH via uv tool (editable; code changes apply immediately).
 install-cli:
