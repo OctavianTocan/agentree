@@ -1,6 +1,6 @@
 [project]
 name = "agentree"
-version = "0.1.0"
+version = "0.2.0"
 description = "Index PDF documents into a hierarchical section tree for agent retrieval, using Claude or Codex structured completions instead of vector chunking."
 readme = "README.md"
 license = "MIT"
