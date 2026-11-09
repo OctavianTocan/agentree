@@ -3,18 +3,6 @@
 This project uses the **agentic-stack** portable brain. All memory, skills,
 and protocols live in `.agent/`.
 
-## Teaching / explaining — always use `i-have-adhd`
-
-**Whenever you explain anything to the user, teach them how to do something,
-walk through a plan, or tell them what to do next:** load and follow the
-`i-have-adhd` skill first (`SKILL.md` from the installed plugin / skill dirs).
-
-Do this even if the user did not type `/i-have-adhd`. Applies to planning,
-how-tos, debugging guidance, and "what's next" answers.
-
-Shape every such reply as: action first, numbered steps, one next action at
-the end, no preamble, no closers. Full rules live in the skill.
-
 ## Session start — read in this order
 1. `.agent/AGENTS.md` — the map of the whole brain
 2. `.agent/memory/personal/PREFERENCES.md` — how the user works
