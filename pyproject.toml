@@ -28,7 +28,7 @@ classifiers = [
 
 dependencies = [
   "claude-agent-sdk>=0.2.128",
-  "fastmcp>=3.4.5",
+  "fastmcp>=3.4.7",
   "httpx>=0.28.1",
   "loguru>=0.7.3",
   "mcp[cli]>=1.28.1",
